@@ -1,0 +1,30 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# OS files
+.DS_Store
+
+# Collected datasets
+jepa_data/
+jepa_data_strided/
+jepa_eval_data/
+jepa_eval_data_strided/
+
+# Trained model / probe artifacts
+*.pt
+*.npz
+
+# Training logs
+jepa_training_log*.csv
+
+# Generated rollout media
+*.gif
+*_filmstrip.png
