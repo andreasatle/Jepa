@@ -9,7 +9,7 @@ Two modes:
 1. Headless GIF mode (works anywhere, no display needed -- e.g. servers,
    containers, this sandbox). Renders a rollout and saves it as a GIF.
 
-       MUJOCO_GL=egl python3 ball_in_cup/ball_in_cup_demo.py
+       MUJOCO_GL=egl python3 ball_in_cup_demo.py
 
 2. Interactive viewer mode (needs a real local display -- your own
    desktop/laptop, not a headless server/container). Pops up a live window
@@ -17,14 +17,14 @@ Two modes:
    Do NOT set MUJOCO_GL=egl for this mode -- the viewer needs a real
    on-screen rendering backend (GLFW), not the offscreen one.
 
-       python3 ball_in_cup/ball_in_cup_demo.py --viewer
+       python3 ball_in_cup_demo.py --viewer
 
 3. Teleop mode -- same as the viewer, but the arrow keys actually drive the
    cup's real actuators (the same 2D action space a trained policy will
    use), instead of watching a random policy flail. Needs `pynput`:
 
        uv add pynput
-       python3 ball_in_cup/ball_in_cup_demo.py --teleop
+       python3 ball_in_cup_demo.py --teleop
 
    On macOS you'll likely need to grant your terminal (or whatever runs
    the process) Accessibility permission the first time -- System Settings

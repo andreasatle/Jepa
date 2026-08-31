@@ -18,7 +18,7 @@ JEPA pretraining works. Real-data linear probes (after the K_CONTEXT restructuri
 - Single-frame `z` → position: test R² ≈ 0.92–0.94 (as expected, velocity not recoverable from one frame — that's the point).
 - K_CONTEXT window → position + velocity: position R² ≈ 0.92–0.94, velocity R² ≈ 0.59–0.72.
 
-## Built so far (all Python scripts in `~/Projects/Jepa/ball_in_cup/`, run from the repo root)
+## Built so far (self-contained in `~/Projects/Jepa/ball_in_cup/`; run scripts from that directory)
 
 - `collect_data.py` / `collect_eval_data.py` — random-policy rollout collection (pixels+actions; eval version also logs ground-truth position/velocity from `physics.position()`/`physics.velocity()`).
 - `jepa_train.py` — E, P, VICReg loss, training loop, checkpointing/resume. `VERSION` string only bumped when explicitly asked.
