@@ -1,0 +1,22 @@
+# Encoder / predictor / probe-head checkpoints
+*.pt
+
+# Cached features and label arrays
+*.npz
+*.npy
+probe_cache/
+
+# Per-epoch encoder snapshots (archive_ckpts.py / train.py archive_every)
+ckpt_archive*/
+
+# Probe outputs (logs, curves, confusion matrices)
+probe_out/
+
+# Training / sweep logs
+jepa_log*.csv
+jepa_diag_log*.csv
+*.log
+
+# Generated media
+cluster.png
+mask_*.png
