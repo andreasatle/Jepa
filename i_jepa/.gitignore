@@ -20,3 +20,6 @@ jepa_diag_log*.csv
 # Generated media
 cluster.png
 mask_*.png
+
+# Parked superseded runs (see train.py VERSION)
+*_run/

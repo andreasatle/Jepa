@@ -1,20 +1,22 @@
 """
-Anti-collapse loss for I-JEPA, VICReg-style -- no EMA, no target network, no
-stop-gradient. The same encoder E produces both the context tokens and the
-target tokens, and gradients flow through both passes; collapse is blocked
-directly by regularizing E's output covariance instead of by a momentum
-teacher. Formulation from ball_in_cup/jepa_train.py, lifted to patch tokens.
+Anti-collapse loss for I-JEPA -- single encoder, no EMA / momentum teacher.
+Collapse is blocked by a STOP-GRAD on the prediction target plus VICReg on the
+online embeddings. Covariance formulation from ball_in_cup/jepa_train.py.
 
-Total loss:
+Total loss (v3):
 
-    L = ( 1 - cos(pred_i, target_i) ) averaged over i        (prediction)
-        + kappa/2 * sum_Z pen(Z)                              (anti-collapse)
+    L = smooth_l1( pred_i, LN(target_i) ) averaged over i     (prediction)
+        + kappa/2 * sum_Z pen(Z)                              (token-level VICReg)
+        + kappa_pooled/2 * sum_Z pen(Z_pooled)               (image-level VICReg)
 
-The prediction term is on L2-NORMALISED pred/target: with the same encoder on
-both sides and no stop-grad, a raw ||pred - target||^2 is minimised for free
-by shrinking every embedding toward a constant, i.e. it rewards collapse.
-Comparing directions (1 - cos) removes that reward; magnitude is left to the
-covariance penalty below, which is evaluated on the UN-normalised embeddings.
+The target is `h.detach()` -- the same encoder, stop-gradded (SimSiam's
+essential ingredient). Because the target cannot be pulled back toward the
+prediction, matching magnitudes directly (`smooth_l1`) no longer rewards
+shrinking both sides to a constant, so no L2-normalisation is needed; the
+target is LayerNormed over its feature dim (no affine, standard I-JEPA) just to
+keep its scale stable. `predictor_loss="cos"` + a non-detached target is still
+supported for the pre-v3 recipe. VICReg is evaluated on the UN-normalised
+ONLINE embeddings (gradients flow), never on the detached target.
 
 pen(Z), for D-dim embeddings stacked as rows of Z (M, D) and C = Cov(Z):
 
@@ -59,35 +61,55 @@ def vicreg_penalty(z: torch.Tensor, eps: float = 1e-4) -> torch.Tensor:
     return off_diag_term + diag_term
 
 
-def ijepa_loss(pred, target, reg_embeddings, kappa: float = 1.0, eps: float = 1e-4,
-               pooled_embeddings=None, kappa_pooled: float = 0.0):
+def ijepa_loss(pred, target, reg_embeddings=None, kappa: float = 1.0, eps: float = 1e-4,
+               pooled_embeddings=None, kappa_pooled: float = 0.0,
+               predictor_loss: str = "cos", target_layernorm: bool = False):
     """
-    pred, target:   (..., D) -- predictor output and target-encoder slices.
-                    L2-normalised here, so the prediction term is 1 - cos.
-                    target is NOT detached: gradients flow into E through it.
-    reg_embeddings: iterable of UN-normalised embedding tensors for the
-                    covariance penalty -- typically [context_tokens,
-                    target_encoder_output]. Flattened to (sample*patch, D), so
-                    this term only sees the PATCH-TOKEN distribution.
-    kappa:          weight on the token-level anti-collapse penalty.
+    pred, target:   (..., D) -- predictor output and target slices.
+    predictor_loss: "cos"       -> 0.5 * ||norm(pred) - norm(target)||^2 (= 1 - cos).
+                                   For a NON-detached target: comparing directions
+                                   removes the reward for shrinking both sides.
+                    "smooth_l1" -> F.smooth_l1_loss(pred, target). For a
+                                   STOP-GRADDED target (target = h.detach()):
+                                   nothing to gain from shrinking, match
+                                   magnitudes directly.
+    target_layernorm: LayerNorm `target` over its feature dim (no affine) before
+                    the loss -- standard I-JEPA target normalisation, keeps the
+                    smooth_l1 target scale stable.
+    reg_embeddings: iterable of UN-normalised ONLINE embedding tensors for the
+                    token-level covariance penalty -- typically
+                    [context_tokens, full_image_tokens]. Flattened to
+                    (sample*patch, D). None / kappa 0 -> skipped.
+    kappa:          weight on the token-level penalty.
     pooled_embeddings: iterable of UN-normalised (B, D) tensors -- typically the
                     mean-pooled per-image embedding h.mean(1). Same VICReg
-                    penalty, but now the variance term protects BETWEEN-IMAGE
-                    variance (the quantity the downstream probe actually uses;
-                    the token-level term above is blind to it -- it can stay
-                    happy while every image's mean collapses to one point).
-    kappa_pooled:   weight on that image-level penalty. 0.0 -> disabled (old
-                    behaviour, token-level only).
+                    penalty, but the variance term now protects BETWEEN-IMAGE
+                    variance (what the downstream probe uses; the token-level
+                    term is blind to it -- it stays happy while every image's
+                    mean collapses to one point).
+    kappa_pooled:   weight on that image-level penalty. 0.0 -> skipped.
 
     returns (loss, parts) with `parts` a dict of detached scalars for logging.
     """
-    pn = F.normalize(pred, dim=-1)
-    tn = F.normalize(target, dim=-1)
-    inv = 0.5 * (pn - tn).pow(2).sum(dim=-1).mean()          # = 1 - cos(pred, target)
+    if target_layernorm:
+        target = F.layer_norm(target, (target.shape[-1],))
 
-    pen = sum(vicreg_penalty(z, eps) for z in reg_embeddings)
-    loss = inv + 0.5 * kappa * pen
-    parts = {"inv": inv.detach(), "pen": pen.detach()}
+    if predictor_loss == "cos":
+        pn = F.normalize(pred, dim=-1)
+        tn = F.normalize(target, dim=-1)
+        inv = 0.5 * (pn - tn).pow(2).sum(dim=-1).mean()      # = 1 - cos(pred, target)
+    elif predictor_loss == "smooth_l1":
+        inv = F.smooth_l1_loss(pred, target)
+    else:
+        raise ValueError(f"predictor_loss must be 'cos' or 'smooth_l1', got {predictor_loss!r}")
+
+    loss = inv
+    parts = {"inv": inv.detach()}
+
+    if reg_embeddings and kappa:
+        pen = sum(vicreg_penalty(z, eps) for z in reg_embeddings)
+        loss = loss + 0.5 * kappa * pen
+        parts["pen"] = pen.detach()
 
     if pooled_embeddings and kappa_pooled:
         pen_pool = sum(vicreg_penalty(z, eps) for z in pooled_embeddings)
@@ -135,4 +157,26 @@ if __name__ == "__main__":
     v1.backward()
     assert pooled.grad is not None and pooled.grad.norm().item() > 0
     print("pooled term OK")
+
+    # v3 path: smooth_l1 + LayerNormed stop-grad target, VICReg on online embeds
+    ctx = torch.randn(4, 10, D, requires_grad=True)
+    pred = torch.randn(4, 10, D, requires_grad=True)
+    tgt = ctx.detach() * 5.0                                  # different scale on purpose
+    v, parts = ijepa_loss(pred, tgt, reg_embeddings=[ctx],
+                          pooled_embeddings=[ctx.mean(1)], kappa=1.0, kappa_pooled=1.0,
+                          predictor_loss="smooth_l1", target_layernorm=True)
+    v.backward()
+    assert {"inv", "pen", "pen_pool", "loss"} <= parts.keys()
+    assert ctx.grad.norm().item() > 0 and pred.grad.norm().item() > 0
+    v_match, _ = ijepa_loss(tgt / tgt.std(), tgt, predictor_loss="smooth_l1",
+                            target_layernorm=True)
+    v_off, _ = ijepa_loss(torch.zeros_like(tgt), tgt, predictor_loss="smooth_l1",
+                          target_layernorm=True)
+    assert v_match.item() < v_off.item()
+    try:
+        ijepa_loss(pred, tgt, predictor_loss="l2")
+        raise AssertionError("bad predictor_loss should raise")
+    except ValueError:
+        pass
+    print("smooth_l1 / stop-grad path OK")
     print("OK")

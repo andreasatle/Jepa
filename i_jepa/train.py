@@ -1,16 +1,27 @@
 """
-I-JEPA pretraining on PathMNIST-224 -- EMA-free, VICReg anti-collapse.
+I-JEPA pretraining on PathMNIST-224 -- EMA-free, stop-grad target, VICReg
+anti-collapse.
 
-One optimizer step (no target network, no stop-grad -- see loss.py):
+One optimizer step (single encoder, no momentum teacher -- see loss.py):
 
-    z_ctx = encoder(imgs, masks=enc_masks)      # context: only the context block
-    h     = encoder(imgs)                        # target: full image, SAME weights
-    h_tgt = apply_masks(h, pred_masks)           # the blocks to predict
+    z_ctx = encoder(imgs, masks=enc_masks)      # context block, gets grad
+    h     = encoder(imgs)                        # full image, SAME weights, gets grad
+    h_tgt = apply_masks(h.detach(), pred_masks)  # prediction target: STOP-GRAD
     p     = predictor(z_ctx, enc_masks, pred_masks)
-    loss  = 1/2 ||p - h_tgt||^2  +  kappa/2 ( pen(z_ctx) + pen(h) )
+    loss  = smooth_l1(p, LN(h_tgt))
+            + kappa/2       ( pen(z_ctx) + pen(h) )       # token-level VICReg
+            + kappa_pooled/2  pen(h.mean(patches))        # image-level VICReg
 
-Both encoder passes get gradients; collapse is held off by `pen` (sqrt on the
-covariance diagonal), not by a momentum teacher.
+The stop-grad on the target is what SimSiam identified as the essential
+anti-collapse ingredient: the predictor must move to meet a target it cannot
+pull back, so there is no reward for shrinking both sides to a constant. VICReg
+keeps the online embeddings spread + decorrelated (token-level) and protects
+between-image variance (pooled). No EMA network, no momentum schedule.
+
+v1 (non-detached target, token VICReg only) collapsed at the image level; v2
+(+ pooled VICReg) fixed the rank but frozen-probe accuracy stalled below
+random-init because the non-detached target let context/target co-adapt into a
+predictable-but-not-semantic code. v3 adds the stop-grad.
 
 The config is sized for a single Apple-silicon / one-GPU box, not paper scale.
 Resumes from jepa_ckpt.pt if it exists.
@@ -18,6 +29,7 @@ Resumes from jepa_ckpt.pt if it exists.
 Run:
     python i_jepa/train.py              # full run
     python i_jepa/train.py --smoke      # tiny model, 3 steps, wiring check only
+    python i_jepa/train.py --diag       # fresh 4-epoch run, separate ckpt/log
 """
 
 import csv
@@ -38,7 +50,7 @@ from masks import MultiBlockMaskCollator
 from loss import ijepa_loss
 from data import PathMNIST224
 
-VERSION = "v1"
+VERSION = "v3"      # v1 non-detached target; v2 +pooled VICReg; v3 +stop-grad target
 
 
 # ---------------------------------------------------------------------------
@@ -257,15 +269,16 @@ def train(cfg: Config):
             for g in opt.param_groups:
                 g["lr"] = lr_at(step, steps_per_epoch, cfg)
 
-            z_ctx = encoder(imgs, masks=enc_idx, key_pad=ctx_keep)  # (B, L, D)
-            h = encoder(imgs)                           # (B, N, D)  -- same weights, no stop-grad
-            h_tgt = apply_masks(h, pred_masks)          # (n_pred*B, K_tgt, D)
+            z_ctx = encoder(imgs, masks=enc_idx, key_pad=ctx_keep)  # (B, L, D)  -- context, grad
+            h = encoder(imgs)                           # (B, N, D)  -- full image, grad (for VICReg)
+            h_tgt = apply_masks(h.detach(), pred_masks)  # (n_pred*B, K_tgt, D)  -- target, STOP-GRAD
             p = predictor(z_ctx, enc_idx, pred_masks, ctx_keep=ctx_keep)  # (n_pred*B, K_tgt, D)
 
             h_img = h.mean(dim=1)                        # (B, D) per-image, what eval_probe uses
             loss, parts = ijepa_loss(
                 p, h_tgt, reg_embeddings=[z_ctx[ctx_keep], h], kappa=cfg.kappa,
-                pooled_embeddings=[h_img], kappa_pooled=cfg.kappa_pooled)
+                pooled_embeddings=[h_img], kappa_pooled=cfg.kappa_pooled,
+                predictor_loss="smooth_l1", target_layernorm=True)
 
             opt.zero_grad(set_to_none=True)
             loss.backward()
@@ -286,17 +299,18 @@ def train(cfg: Config):
                 img_std = pooled.std(dim=0).mean().item()
                 sv = torch.linalg.svdvals(pooled - pooled.mean(dim=0))
                 img_effrank = float((sv.sum() ** 2) / (sv ** 2).sum().clamp_min(1e-12))
+                pen = float(parts.get("pen", 0.0))
                 pen_pool = float(parts.get("pen_pool", 0.0))
                 ips = win_imgs / max(1e-6, time.time() - win_t)  # avg over the window
                 win_t, win_imgs = time.time(), 0
                 lr = opt.param_groups[0]["lr"]
                 print(f"e{epoch} s{step}  loss {parts['loss']:.3f}  "
-                      f"inv {parts['inv']:.3f}  pen {parts['pen']:.3f}  "
+                      f"inv {parts['inv']:.3f}  pen {pen:.3f}  "
                       f"pen_pool {pen_pool:.3f}  z_std {z_std:.4f}  "
                       f"img_std {img_std:.4f}  img_effrank {img_effrank:.1f}  "
                       f"lr {lr:.2e}  {ips:.0f} img/s")
                 logw.writerow([epoch, step, f"{parts['loss']:.5f}", f"{parts['inv']:.5f}",
-                               f"{parts['pen']:.5f}", f"{pen_pool:.5f}", f"{z_std:.5f}",
+                               f"{pen:.5f}", f"{pen_pool:.5f}", f"{z_std:.5f}",
                                f"{img_std:.5f}", f"{img_effrank:.3f}", f"{lr:.3e}", f"{ips:.1f}"])
                 logf.flush()
 
