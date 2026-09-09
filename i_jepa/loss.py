@@ -1,9 +1,14 @@
 """
-Anti-collapse loss for I-JEPA -- single encoder, no EMA / momentum teacher.
-Collapse is blocked by a STOP-GRAD on the prediction target plus VICReg on the
-online embeddings. Covariance formulation from ball_in_cup/jepa_train.py.
+Prediction + optional anti-collapse loss for I-JEPA. Covariance formulation from
+ball_in_cup/jepa_train.py.
 
-Total loss (v3):
+v4 supplies `target` from an EMA teacher, so the momentum lag is what blocks
+collapse and the VICReg penalties below are optional (kappa / kappa_pooled = 0).
+v3 was EMA-free: `target` was `h.detach()` (SimSiam stop-grad) and VICReg on the
+online embeddings was the only thing resisting collapse. `ijepa_loss` itself is
+agnostic to where `target` comes from -- it just compares `pred` to `target`.
+
+Total loss (VICReg terms dropped when their kappa is 0):
 
     L = smooth_l1( pred_i, LN(target_i) ) averaged over i     (prediction)
         + kappa/2 * sum_Z pen(Z)                              (token-level VICReg)

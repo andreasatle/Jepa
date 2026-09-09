@@ -1,30 +1,30 @@
 """
-I-JEPA pretraining on PathMNIST-224 -- EMA-free, stop-grad target, VICReg
-anti-collapse.
+I-JEPA pretraining on PathMNIST-224.
 
-One optimizer step (single encoder, no momentum teacher -- see loss.py):
+One optimizer step (v4 -- EMA target encoder):
 
-    z_ctx = encoder(imgs, masks=enc_masks)      # context block, gets grad
-    h     = encoder(imgs)                        # full image, SAME weights, gets grad
-    h_tgt = apply_masks(h.detach(), pred_masks)  # prediction target: STOP-GRAD
+    z_ctx = encoder(imgs, masks=enc_masks)              # context block, gets grad
+    with no_grad:
+        h_tgt = apply_masks(target_encoder(imgs),       # EMA teacher, full image
+                            pred_masks)                 # prediction target
     p     = predictor(z_ctx, enc_masks, pred_masks)
-    loss  = smooth_l1(p, LN(h_tgt))
-            + kappa/2       ( pen(z_ctx) + pen(h) )       # token-level VICReg
-            + kappa_pooled/2  pen(h.mean(patches))        # image-level VICReg
+    loss  = smooth_l1(p, LN(h_tgt))                     # + optional VICReg (off by default)
+    opt.step();  target_encoder <- m*target + (1-m)*encoder   # m: 0.996 -> 1.0
 
-The stop-grad on the target is what SimSiam identified as the essential
-anti-collapse ingredient: the predictor must move to meet a target it cannot
-pull back, so there is no reward for shrinking both sides to a constant. VICReg
-keeps the online embeddings spread + decorrelated (token-level) and protects
-between-image variance (pooled). No EMA network, no momentum schedule.
+The momentum teacher is the anti-collapse mechanism: the target cannot be pulled
+back toward the prediction, and the momentum lag stops context/target from
+co-adapting into a trivial code. Standard I-JEPA recipe (Assran et al.).
 
-v1 (non-detached target, token VICReg only) collapsed at the image level; v2
-(+ pooled VICReg) fixed the rank but frozen-probe accuracy stalled below
-random-init because the non-detached target let context/target co-adapt into a
-predictable-but-not-semantic code. v3 adds the stop-grad.
+History: v1 (non-detached target, token VICReg) collapsed at the image level; v2
+(+ pooled VICReg) fixed feature rank but the frozen probe stayed below random
+init; v3 (stop-grad target, still EMA-free) did not clear random init either
+(linear 0.65 vs 0.74 @ epoch 30). v4 brings back the EMA teacher. The VICReg
+penalties survive as optional insurance -- `kappa` / `kappa_pooled`, both 0 by
+default; set `kappa_pooled` ~0.1 if between-image `img_std` sags.
 
-The config is sized for a single Apple-silicon / one-GPU box, not paper scale.
-Resumes from jepa_ckpt.pt if it exists.
+Config is sized for a single Apple-silicon / one-GPU box, not paper scale.
+Resumes from jepa_ckpt.pt if present (a pre-v4 ckpt seeds the teacher from the
+online weights).
 
 Run:
     python i_jepa/train.py              # full run
@@ -32,6 +32,7 @@ Run:
     python i_jepa/train.py --diag       # fresh 4-epoch run, separate ckpt/log
 """
 
+import copy
 import csv
 import math
 import os
@@ -50,7 +51,7 @@ from masks import MultiBlockMaskCollator
 from loss import ijepa_loss
 from data import PathMNIST224
 
-VERSION = "v3"      # v1 non-detached target; v2 +pooled VICReg; v3 +stop-grad target
+VERSION = "v4"      # v1 non-detached target; v2 +pooled VICReg; v3 +stop-grad; v4 +EMA teacher
 
 
 # ---------------------------------------------------------------------------
@@ -83,22 +84,22 @@ class Config:
     warmup_steps: int = 3000       # fixed step count -- doesn't drift when batch_size changes
     weight_decay: float = 0.04
     grad_clip: float = 1.0
-    # anti-collapse weight. This is EMA-free: `target` is the same encoder with
-    # no stop-grad, so the degenerate fix-point (pred and target both -> a
-    # constant) drives the prediction loss to 0 and `pen` is the ONLY thing
-    # resisting it -- it has to be weighted for gradient balance, not just so
-    # the loss magnitudes match. ball_in_cup used 1.0 with this same penalty.
-    # A first attempt at 2.5e-3 (~1/embed_dim) collapsed: z_std 0.36 -> 0.08
-    # over 700 steps. Raise further if z_std still sags; lower toward ~0.3 if
-    # early training is unstable (features pinned before prediction learns).
-    kappa: float = 1.0
-    # `kappa` regularizes the PATCH-TOKEN covariance only -- it stays satisfied
-    # (z_std ~1) even as the mean-pooled per-image feature (what eval_probe uses)
-    # collapses to ~1-2 effective dims. The v1 30-epoch run did exactly that:
-    # frozen linear probe 0.62 vs 0.76 for random init, eff-rank 41 -> 23 over
-    # epochs 11-28. `kappa_pooled` adds the same VICReg penalty on h.mean(1), so
-    # the variance term protects between-image variance. 0.0 -> v1 behaviour.
-    kappa_pooled: float = 1.0
+    # VICReg anti-collapse penalties on the ONLINE encoder. v4 leans on the EMA
+    # teacher for collapse resistance, so both are OFF by default. History: with
+    # no EMA (v1-v3) `kappa` (token-level covariance) stayed satisfied -- z_std
+    # ~1.0 -- even as the mean-pooled per-image feature that eval_probe uses
+    # collapsed to ~1-2 effective dims; `kappa_pooled` (same penalty on
+    # h.mean(1)) fixed that rank but never lifted probe accuracy past random
+    # init. Kept as insurance: set `kappa_pooled` ~0.1 if `img_std` sags. Any
+    # non-zero value costs one extra full-image online forward/backward per step.
+    kappa: float = 0.0
+    kappa_pooled: float = 0.0
+
+    # EMA target encoder: theta_tgt <- m*theta_tgt + (1-m)*theta_ctx after every
+    # optimizer step, with m ramped linearly ema_start -> ema_end over the whole
+    # run (standard I-JEPA). m=1.0 at the end freezes the teacher.
+    ema_start: float = 0.996
+    ema_end: float = 1.0
 
     # 0 keeps the ~13.5 GB decompressed array in one process (see data.py). The
     # MPS ViT dominates, so extra workers buy little; if you raise this, a fork
@@ -166,22 +167,45 @@ def lr_at(step: int, steps_per_epoch: int, cfg: Config) -> float:
     return 0.5 * cfg.base_lr * (1.0 + math.cos(math.pi * min(1.0, prog)))
 
 
+def ema_at(step: int, steps_per_epoch: int, cfg: Config) -> float:
+    """EMA momentum, linear from ema_start to ema_end over the full run."""
+    total = cfg.n_epochs * steps_per_epoch
+    frac = min(1.0, step / max(1, total))
+    return cfg.ema_start + (cfg.ema_end - cfg.ema_start) * frac
+
+
+@torch.no_grad()
+def ema_update(target: torch.nn.Module, online: torch.nn.Module, m: float) -> None:
+    """target <- m * target + (1 - m) * online, over parameters and buffers."""
+    for pt, po in zip(target.parameters(), online.parameters()):
+        pt.mul_(m).add_(po.detach(), alpha=1.0 - m)
+    for bt, bo in zip(target.buffers(), online.buffers()):
+        bt.copy_(bo)
+
+
 def build_models(cfg: Config, device: torch.device):
     encoder = ViT(
         img_size=cfg.img_size, patch_size=cfg.patch, in_chans=3,
         embed_dim=cfg.embed_dim, depth=cfg.depth, num_heads=cfg.num_heads,
     ).to(device)
+    # EMA teacher: a frozen copy updated only by ema_update(). Kept in eval mode
+    # (this ViT has no dropout/BN, so it matches train mode -- just explicit).
+    target_encoder = copy.deepcopy(encoder)
+    for p in target_encoder.parameters():
+        p.requires_grad_(False)
+    target_encoder.eval()
     predictor = VisionTransformerPredictor(
         num_patches=encoder.patch_embed.num_patches, encoder_dim=cfg.embed_dim,
         predictor_dim=cfg.pred_dim, depth=cfg.pred_depth, num_heads=cfg.pred_heads,
     ).to(device)
-    return encoder, predictor
+    return encoder, target_encoder, predictor
 
 
-def save_ckpt(path, encoder, predictor, opt, epoch, step):
+def save_ckpt(path, encoder, target_encoder, predictor, opt, epoch, step):
     torch.save({
         "version": VERSION,
         "encoder": encoder.state_dict(),
+        "target_encoder": target_encoder.state_dict(),
         "predictor": predictor.state_dict(),
         "opt": opt.state_dict(),
         "epoch": epoch,
@@ -201,12 +225,16 @@ def archive_encoder(cfg, encoder, epoch, step):
     print(f"  archived encoder -> {path}")
 
 
-def maybe_resume(path, encoder, predictor, opt, device):
+def maybe_resume(path, encoder, target_encoder, predictor, opt, device):
     if not os.path.exists(path):
         return 0, 0
     ck = torch.load(path, map_location=device)
     encoder.load_state_dict(ck["encoder"])
     predictor.load_state_dict(ck["predictor"])
+    # pre-v4 ckpts have no teacher -- seed it from the online weights
+    target_encoder.load_state_dict(ck.get("target_encoder", ck["encoder"]))
+    for p in target_encoder.parameters():
+        p.requires_grad_(False)
     try:
         opt.load_state_dict(ck["opt"])
         print(f"resumed from {path}: epoch {ck['epoch']}, step {ck['step']}")
@@ -225,7 +253,8 @@ def train(cfg: Config):
     torch.manual_seed(0)
     print(f"I-JEPA pretrain {VERSION}  device={device}  "
           f"encoder=ViT(d{cfg.embed_dim}x{cfg.depth})  predictor=(d{cfg.pred_dim}x{cfg.pred_depth})  "
-          f"batch={cfg.batch_size}  kappa={cfg.kappa}  kappa_pooled={cfg.kappa_pooled}")
+          f"batch={cfg.batch_size}  ema={cfg.ema_start}->{cfg.ema_end}  "
+          f"kappa={cfg.kappa}  kappa_pooled={cfg.kappa_pooled}")
 
     dataset = PathMNIST224("train", augment=True, img_size=cfg.img_size)
     collator = MultiBlockMaskCollator(
@@ -242,18 +271,18 @@ def train(cfg: Config):
     )
     steps_per_epoch = len(loader)
 
-    encoder, predictor = build_models(cfg, device)
+    encoder, target_encoder, predictor = build_models(cfg, device)
     params = list(encoder.parameters()) + list(predictor.parameters())
     opt = torch.optim.AdamW(params, lr=cfg.base_lr, weight_decay=cfg.weight_decay)
 
-    start_epoch, step = maybe_resume(cfg.ckpt, encoder, predictor, opt, device)
+    start_epoch, step = maybe_resume(cfg.ckpt, encoder, target_encoder, predictor, opt, device)
 
     new_log = not os.path.exists(cfg.logcsv)
     logf = open(cfg.logcsv, "a", newline="")
     logw = csv.writer(logf)
     if new_log:
         logw.writerow(["epoch", "step", "loss", "inv", "pen", "pen_pool", "z_std",
-                       "img_std", "img_effrank", "lr", "imgs_per_s"])
+                       "img_std", "img_effrank", "lr", "imgs_per_s", "ema_m"])
 
     encoder.train()
     predictor.train()
@@ -268,22 +297,37 @@ def train(cfg: Config):
 
             for g in opt.param_groups:
                 g["lr"] = lr_at(step, steps_per_epoch, cfg)
+            m = ema_at(step, steps_per_epoch, cfg)
 
             z_ctx = encoder(imgs, masks=enc_idx, key_pad=ctx_keep)  # (B, L, D)  -- context, grad
-            h = encoder(imgs)                           # (B, N, D)  -- full image, grad (for VICReg)
-            h_tgt = apply_masks(h.detach(), pred_masks)  # (n_pred*B, K_tgt, D)  -- target, STOP-GRAD
+            with torch.no_grad():
+                h_tgt = apply_masks(target_encoder(imgs), pred_masks)  # (n_pred*B, K_tgt, D) -- EMA target
             p = predictor(z_ctx, enc_idx, pred_masks, ctx_keep=ctx_keep)  # (n_pred*B, K_tgt, D)
 
-            h_img = h.mean(dim=1)                        # (B, D) per-image, what eval_probe uses
+            # Full-image online pass: needed with grad only when a VICReg penalty
+            # is on; otherwise a no-grad forward just to keep the img_std /
+            # img_effrank collapse diagnostics alive.
+            use_vicreg = bool(cfg.kappa or cfg.kappa_pooled)
+            if use_vicreg:
+                h_diag = encoder(imgs)                   # (B, N, D)  -- online full image, grad
+            else:
+                with torch.no_grad():
+                    h_diag = encoder(imgs)
+            h_img = h_diag.mean(dim=1)                   # (B, D) per-image, what eval_probe uses
+
             loss, parts = ijepa_loss(
-                p, h_tgt, reg_embeddings=[z_ctx[ctx_keep], h], kappa=cfg.kappa,
-                pooled_embeddings=[h_img], kappa_pooled=cfg.kappa_pooled,
+                p, h_tgt,
+                reg_embeddings=[z_ctx[ctx_keep], h_diag] if use_vicreg else None,
+                kappa=cfg.kappa,
+                pooled_embeddings=[h_img] if use_vicreg else None,
+                kappa_pooled=cfg.kappa_pooled,
                 predictor_loss="smooth_l1", target_layernorm=True)
 
             opt.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(params, cfg.grad_clip)
             opt.step()
+            ema_update(target_encoder, encoder, m)
             step += 1
             win_imgs += imgs.shape[0]
 
@@ -294,7 +338,7 @@ def train(cfg: Config):
                 img_buf.pop(0)
 
             if step % cfg.log_every == 0:
-                z_std = h.detach().reshape(-1, h.shape[-1]).std(dim=0).mean().item()
+                z_std = h_diag.detach().reshape(-1, h_diag.shape[-1]).std(dim=0).mean().item()
                 pooled = torch.cat(img_buf)                       # (<=cap*B, D)
                 img_std = pooled.std(dim=0).mean().item()
                 sv = torch.linalg.svdvals(pooled - pooled.mean(dim=0))
@@ -308,10 +352,11 @@ def train(cfg: Config):
                       f"inv {parts['inv']:.3f}  pen {pen:.3f}  "
                       f"pen_pool {pen_pool:.3f}  z_std {z_std:.4f}  "
                       f"img_std {img_std:.4f}  img_effrank {img_effrank:.1f}  "
-                      f"lr {lr:.2e}  {ips:.0f} img/s")
+                      f"lr {lr:.2e}  ema {m:.4f}  {ips:.0f} img/s")
                 logw.writerow([epoch, step, f"{parts['loss']:.5f}", f"{parts['inv']:.5f}",
                                f"{pen:.5f}", f"{pen_pool:.5f}", f"{z_std:.5f}",
-                               f"{img_std:.5f}", f"{img_effrank:.3f}", f"{lr:.3e}", f"{ips:.1f}"])
+                               f"{img_std:.5f}", f"{img_effrank:.3f}", f"{lr:.3e}", f"{ips:.1f}",
+                               f"{m:.5f}"])
                 logf.flush()
 
             if cfg.max_steps and step >= cfg.max_steps:
@@ -319,7 +364,7 @@ def train(cfg: Config):
                 logf.close()
                 return
 
-        save_ckpt(cfg.ckpt, encoder, predictor, opt, epoch + 1, step)
+        save_ckpt(cfg.ckpt, encoder, target_encoder, predictor, opt, epoch + 1, step)
         print(f"epoch {epoch} done -- checkpoint saved to {cfg.ckpt}")
         archive_encoder(cfg, encoder, epoch + 1, step)
 
