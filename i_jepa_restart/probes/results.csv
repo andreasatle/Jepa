@@ -1,0 +1,4 @@
+encoder,split,limit,linear,linear_train,knn
+lr3e-4_e005,val,all,0.8026,0.8052,0.8664
+lr3e-4_random,val,all,0.6639,0.6716,0.6330
+lr3e-4_e010,val,all,0.8069,0.8096,0.8696
