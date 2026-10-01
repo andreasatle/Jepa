@@ -1,41 +1,42 @@
 """
-I-JEPA pretraining on PathMNIST: the official recipe, except VICReg replaces
-the EMA target encoder.
+I-JEPA pretraining on PathMNIST: the official recipe (EMA target encoder),
+plus VICReg on the online encoder, plus a full context.
 
 One step:
 
     ctx_mask, ctx_keep, tgt_masks = masks.sample(B)          # context = grid minus targets
-    h     = encoder(imgs)                                    # full image, online, with grad
+    h_tgt = target_encoder(imgs)                             # EMA teacher, full image, no grad
+    h     = encoder(imgs)                                    # online, full image (for VICReg)
     z_ctx = encoder(imgs, ctx_mask, ctx_keep)                # context patches only (padded)
     p     = predictor(z_ctx, ctx_mask, ctx_keep, tgt_masks)  # predicted target embeddings
-    loss  = smooth_l1(p, LN(h.detach()[tgt]))                # invariance (target: stop-grad)
+    loss  = smooth_l1(p, LN(h_tgt[tgt]))                     # invariance
           + var_weight * variance(h) + cov_weight * covariance(h)    # VICReg
+    step; target_encoder <- m * target_encoder + (1 - m) * encoder   # m: 0.996 -> 1
 
-The main deviation. Officially the target comes from an EMA copy of
-the encoder, whose momentum lag is what prevents collapse. Here the target is
-the online encoder's own output, gradient-stopped -- i.e. an EMA with momentum
-0 -- and the VICReg variance/covariance terms on the online full-image tokens
-prevent collapse instead.
-
-The other deviation: the context is exactly the grid minus the target patches,
-padded per batch, instead of the official 85-100% block truncated to the
-shortest context in the batch (see masks.py).
+Deviations from the official recipe (see LEDGER.md for the measurements):
+  - VICReg variance/covariance on the online full-image tokens (official: none).
+  - The context is exactly the grid minus the target patches, padded per batch,
+    instead of the official 85-100% block truncated to the shortest context in
+    the batch (see masks.py).
+Switches kept for comparison: --no-ema (target = online output, stop-gradient),
+--target-grad (no stop-gradient: "pure VICReg"), --vicreg-per-position.
 
 Everything else follows the official code: target blocks (masks.py), ViT
 encoder + narrow predictor with its init (model.py), target LayerNorm +
 smooth-L1 (loss.py), RandomResizedCrop only (data.py), AdamW with linear warmup
 + cosine lr, cosine weight-decay ramp 0.04 -> 0.4 (no decay on biases / norms),
-no gradient clipping. Scaled down: ViT-Tiny, batch 256 (official: ViT-H,
-batch 2048), lr scaled linearly with batch.
+no gradient clipping. Scaled down: small encoder, small batch.
 
 Outputs go to runs/<name>/: config.json, log.csv, ckpt.pt (latest, overwritten
-each epoch) and encoder_eXXX.pt snapshots for probing.
+each epoch) and encoder_eXXX.pt snapshots for probing (with EMA: the target
+encoder, as in the paper's evaluation).
 
 Run:
-    uv run python train.py [--name NAME] [--smoke]
+    uv run python train.py --name NAME --epochs 10 --batch-size 64 --lr 3e-4
 """
 
 import argparse
+import copy
 import csv
 import json
 import math
@@ -47,7 +48,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from data import PathMNIST
-from loss import vicreg_loss
+from loss import center_per_position, vicreg_loss
 from masks import MultiBlockMasks
 from model import Encoder, Predictor, apply_masks
 
@@ -72,6 +73,18 @@ class Config:
     # VICReg on the online full-image tokens (old code's kappa=1 -> 0.5 each)
     var_weight: float = 0.5
     cov_weight: float = 0.5
+    # False: target = h.detach() (stop-gradient). True: gradients flow through the
+    # target too ("pure VICReg"); only the variance/covariance terms resist collapse.
+    target_grad: bool = False
+    # True: VICReg on per-position-centred tokens (loss.center_per_position), so
+    # differences between positions don't count as variance.
+    vicreg_per_position: bool = False
+    # EMA target encoder (official I-JEPA): target = EMA copy of the encoder, no grad,
+    # updated after every step with momentum ramped linearly ema_start -> ema_end.
+    # False: target = the online encoder's output, gradient-stopped.
+    ema: bool = True
+    ema_start: float = 0.996
+    ema_end: float = 1.0
 
     # optimisation. Official at batch 2048: lr 2e-4 -> 1e-3 over 40 of 300
     # epochs, cosine to 1e-6. lr scaled by batch / 2048; epochs shortened with the
@@ -115,6 +128,13 @@ def schedules(step: int, total: int, warmup: int, cfg: Config):
     t = step / max(1, total)
     wd = cfg.wd_start + (cfg.wd_end - cfg.wd_start) * 0.5 * (1 - math.cos(math.pi * t))
     return lr, wd
+
+
+@torch.no_grad()
+def ema_update(target: torch.nn.Module, online: torch.nn.Module, m: float) -> None:
+    """target <- m * target + (1 - m) * online, parameter by parameter."""
+    for pt, po in zip(target.parameters(), online.parameters()):
+        pt.mul_(m).add_(po, alpha=1 - m)
 
 
 def param_groups(*models):
@@ -166,6 +186,11 @@ def train(cfg: Config, name: str):
     predictor = Predictor(grid * grid, cfg.embed_dim, cfg.pred_dim, cfg.pred_depth,
                           cfg.pred_heads).to(device)
     opt = torch.optim.AdamW(param_groups(encoder, predictor))
+    assert not (cfg.ema and cfg.target_grad), "EMA target never gets gradients"
+    if cfg.ema:
+        target_encoder = copy.deepcopy(encoder)
+        target_encoder.requires_grad_(False)
+    use_vicreg = bool(cfg.var_weight or cfg.cov_weight)
 
     total = cfg.epochs * len(loader)
     warmup = round(cfg.warmup_epochs * len(loader))
@@ -192,19 +217,31 @@ def train(cfg: Config, name: str):
             ctx_mask, ctx_keep = ctx_mask.to(device), ctx_keep.to(device)
             tgt_masks = [m.to(device) for m in tgt_masks]
 
-            h = encoder(imgs)                                    # (B, N, D)
-            target = apply_masks(h.detach(), tgt_masks)          # (n_pred*B, K_tgt, D), no grad
+            h = None                                             # online full image, (B, N, D)
+            if cfg.ema:
+                with torch.no_grad():
+                    h_tgt = target_encoder(imgs)                 # EMA teacher, full image
+                if use_vicreg:
+                    h = encoder(imgs)
+            else:
+                h = encoder(imgs)
+                h_tgt = h if cfg.target_grad else h.detach()
+            target = apply_masks(h_tgt, tgt_masks)               # (n_pred*B, K_tgt, D)
             z_ctx = encoder(imgs, ctx_mask, ctx_keep)            # (B, L, D), padded
             pred = predictor(z_ctx, ctx_mask, ctx_keep, tgt_masks)   # (n_pred*B, K_tgt, D)
-            loss, parts = vicreg_loss(pred, target, [h], cfg.var_weight, cfg.cov_weight)
+            reg = [] if h is None else [center_per_position(h) if cfg.vicreg_per_position else h]
+            loss, parts = vicreg_loss(pred, target, reg, cfg.var_weight, cfg.cov_weight)
 
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()
+            if cfg.ema:
+                m = cfg.ema_start + (cfg.ema_end - cfg.ema_start) * step / total
+                ema_update(target_encoder, encoder, m)
             step += 1
 
             if step % cfg.log_every == 0:
-                stats = collapse_stats(h)
+                stats = collapse_stats(h if h is not None else h_tgt)
                 ips = cfg.log_every * cfg.batch_size / (time.time() - t0)
                 t0 = time.time()
                 p = {k: v.item() for k, v in parts.items()}
@@ -220,12 +257,17 @@ def train(cfg: Config, name: str):
             if cfg.max_steps and step >= cfg.max_steps:
                 break
         else:
-            torch.save({"encoder": encoder.state_dict(), "predictor": predictor.state_dict(),
+            # With EMA the probed "encoder" is the target encoder, as in the paper's
+            # evaluation; the online encoder is kept alongside.
+            probed = target_encoder if cfg.ema else encoder
+            extra = {"online_encoder": encoder.state_dict()} if cfg.ema else {}
+            torch.save({"encoder": probed.state_dict(), "predictor": predictor.state_dict(),
                         "opt": opt.state_dict(), "epoch": epoch + 1, "step": step,
-                        "config": asdict(cfg)}, os.path.join(out, "ckpt.pt"))
+                        "config": asdict(cfg), **extra}, os.path.join(out, "ckpt.pt"))
             if (epoch + 1) % cfg.save_every == 0 or epoch + 1 == cfg.epochs:
-                torch.save({"encoder": encoder.state_dict(), "epoch": epoch + 1,
-                            "config": asdict(cfg)}, os.path.join(out, f"encoder_e{epoch + 1:03d}.pt"))
+                torch.save({"encoder": probed.state_dict(), "epoch": epoch + 1,
+                            "config": asdict(cfg), **extra},
+                           os.path.join(out, f"encoder_e{epoch + 1:03d}.pt"))
             continue
         break                                                    # max_steps hit
     log.close()
@@ -238,6 +280,12 @@ if __name__ == "__main__":
     ap.add_argument("--epochs", type=int, help="default 100; warmup scales along (13%%)")
     ap.add_argument("--batch-size", type=int, help="default 256; lr scales along (linear)")
     ap.add_argument("--lr", type=float, help="peak lr, overrides the batch scaling; warmup starts at lr/5")
+    ap.add_argument("--target-grad", action="store_true", help="no stop-gradient on the target (pure VICReg)")
+    ap.add_argument("--vicreg-per-position", action="store_true",
+                    help="VICReg on per-position-centred tokens (closes the position loophole)")
+    ap.add_argument("--no-ema", action="store_true", help="target = online output, stop-gradient (no EMA)")
+    ap.add_argument("--var-weight", type=float, help="VICReg variance weight (default 0.5; 0 = off)")
+    ap.add_argument("--cov-weight", type=float, help="VICReg covariance weight (default 0.5; 0 = off)")
     args = ap.parse_args()
     if args.smoke:
         train(SMOKE, "smoke")
@@ -249,6 +297,16 @@ if __name__ == "__main__":
         if args.batch_size:
             s = args.batch_size / cfg.batch_size
             cfg = replace(cfg, batch_size=args.batch_size, lr=cfg.lr * s, start_lr=cfg.start_lr * s)
+        if args.target_grad:
+            cfg = replace(cfg, target_grad=True, ema=False)
+        if args.vicreg_per_position:
+            cfg = replace(cfg, vicreg_per_position=True)
         if args.lr:
             cfg = replace(cfg, lr=args.lr, start_lr=args.lr / 5)
+        if args.no_ema:
+            cfg = replace(cfg, ema=False)
+        if args.var_weight is not None:
+            cfg = replace(cfg, var_weight=args.var_weight)
+        if args.cov_weight is not None:
+            cfg = replace(cfg, cov_weight=args.cov_weight)
         train(cfg, args.name)

@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 import torch.nn.functional as F
 
-from loss import covariance_loss, invariance_loss, variance_loss, vicreg_loss
+from loss import center_per_position, covariance_loss, invariance_loss, variance_loss, vicreg_loss
 
 
 def main():
@@ -50,6 +50,16 @@ def main():
     assert p1.keys() == {"inv", "var", "cov", "loss"}
     assert ctx.grad.norm() > 0 and pred.grad.norm() > 0
     print("parts:", {k: round(float(x), 3) for k, x in p1.items()})
+    # Position loophole: embeddings that depend on position only (same for every image)
+    # look healthy to token-level VICReg but must fail after per-position centring.
+    B, N = 64, 196
+    pos_only = torch.randn(1, N, D).expand(B, N, D)                   # no image content at all
+    content = torch.randn(B, N, D)                                    # differs between images
+    print(f"position-only: token-level var={variance_loss(pos_only):.2f}  "
+          f"per-position var={variance_loss(center_per_position(pos_only)):.1f}")
+    assert variance_loss(pos_only) < 1.0, "token-level stats should be fooled (that is the loophole)"
+    assert variance_loss(center_per_position(pos_only)) > 0.9 * D, "per-position should see collapse"
+    assert variance_loss(center_per_position(content)) < 1.0, "real content should still pass"
     print("OK")
 
 

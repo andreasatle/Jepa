@@ -87,11 +87,23 @@ def covariance_loss(z: torch.Tensor) -> torch.Tensor:
     return off_diag.pow(2).sum() / z.shape[-1]
 
 
+def center_per_position(h: torch.Tensor) -> torch.Tensor:
+    """
+    h: (B, N, D) full-image tokens. Subtract, at every position, the mean over the
+    B images. What is left is only how images differ at the same position, so an
+    embedding that depends on position alone becomes 0 and fails the variance term.
+    (Plain token-level statistics count position-to-position differences as healthy
+    variance -- the loophole pure VICReg exploited in run `target-grad`.)
+    """
+    return h - h.mean(dim=0, keepdim=True)
+
+
 def vicreg_loss(pred, target, regularized=(), var_weight: float = 0.0,
                 cov_weight: float = 0.0):
     """
     pred, target: (..., D) predictor output and target embeddings of the hidden
-                  patches. `target` should come from the EMA encoder under no_grad.
+                  patches. `target` is the encoder's own full-image output
+                  (gradient-stopped unless train.py's target_grad is on).
     regularized:  iterable of ONLINE embedding tensors (..., D) that the
                   variance / covariance terms act on (see module docstring).
     var_weight, cov_weight: 0 switches the term off (no compute).

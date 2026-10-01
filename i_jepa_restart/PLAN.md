@@ -22,7 +22,7 @@ Fine-tuning (unfreezing the encoder while training the classifier) is a differen
 
 ## Rules
 
-- Start from the official I-JEPA recipe (multi-block masks, target LayerNorm + smooth-L1, official init and optimizer schedules), with two decided deviations: (1) VICReg on the online encoder replaces the EMA target encoder (target = online output, stop-gradient); (2) the context is exactly the 14x14 grid minus the target patches, padded per batch with an attention mask, instead of the official 85-100% block truncated to the shortest context in the batch. Nothing else extra.
+- Start from the official I-JEPA recipe (multi-block masks, target LayerNorm + smooth-L1, official init and optimizer schedules), including the EMA target encoder, with two decided deviations: (1) VICReg on the online encoder, in addition to EMA (VICReg without EMA was tested and lost, see LEDGER.md); (2) the context is exactly the 14x14 grid minus the target patches, padded per batch with an attention mask, instead of the official 85-100% block truncated to the shortest context in the batch. Nothing else extra.
 - One change at a time, measured against the same baseline with the same probes. A change stays only if it clearly helps; otherwise it comes out.
 - `LEDGER.md` lists every component in the code and the measurement that justifies it. Anything not in the ledger gets deleted.
 - Tests are few and fixed: mask correctness, EMA update, and the probe separating floor from ceiling. No test per change.

@@ -2,3 +2,7 @@ encoder,split,limit,linear,linear_train,knn
 lr3e-4_e005,val,all,0.8026,0.8052,0.8664
 lr3e-4_random,val,all,0.6639,0.6716,0.6330
 lr3e-4_e010,val,all,0.8069,0.8096,0.8696
+target-grad_e010,val,all,0.7410,0.7454,0.7788
+target-grad-pp_e010,val,all,0.7761,0.7799,0.8061
+ema-vicreg_e005,val,all,0.7970,0.8040,0.8704
+ema-vicreg_e010,val,all,0.8086,0.8098,0.8738
