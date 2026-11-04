@@ -39,6 +39,7 @@ Fine-tuning (unfreezing the encoder while training the classifier) is a differen
 
 - [ ] At the probe step: write a full reference section on the probes (linear, k-NN, and MLP only if used) — how each works mechanically, what it measures, fundamental vs. convenience, and how to read the numbers against the random-init baseline. All probes in one place.
 - [ ] Fix the I-JEPA page on atle.dev: it says "EMA-free", but v4 had the EMA teacher.
+- [ ] Naming after the switch to LeJEPA (2026-11-04; the user will decide later): the folder holds both methods, I-JEPA kept as the reference for the ledger's comparisons. Proposed: `train.py` -> `ijepa.py` (it is I-JEPA's trainer; `lejepa.py` imports its helpers from it), README and LEDGER headers saying LeJEPA is current and I-JEPA the reference. The folder name `i_jepa_restart` is the user's call; renaming it (e.g. `jepa_pathmnist`) breaks ledger paths and the probe cache. This plan's Goal and Rules still describe I-JEPA and need the same update.
 
 ## Terms
 
