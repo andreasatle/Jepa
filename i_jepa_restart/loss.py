@@ -87,6 +87,42 @@ def covariance_loss(z: torch.Tensor) -> torch.Tensor:
     return off_diag.pow(2).sum() / z.shape[-1]
 
 
+def sigreg_loss(z: torch.Tensor, num_slices: int = 1024, num_points: int = 17,
+                t_max: float = 5.0) -> torch.Tensor:
+    """
+    SIGReg (LeJEPA, Balestriero & LeCun 2025, arXiv 2511.08544): push the embedding
+    distribution toward an isotropic Gaussian N(0, I), the one the paper proves
+    minimises downstream prediction risk. Collapse is then a bad *score*, not a
+    path the training dynamics happen to avoid, so no EMA or stop-gradient is needed.
+
+    z: (M, D), one row per sample (here: one mean-pooled embedding per image).
+
+    Sliced: project z onto `num_slices` random unit directions a (resampled every
+    call), and test each 1-D projection x = z a against N(0, 1) with the
+    Epps-Pulley statistic, which compares characteristic functions:
+
+        EP = M * integral |phi_hat(t) - exp(-t^2/2)|^2 w(t) dt,   w(t) = exp(-t^2)
+        phi_hat(t) = mean_j exp(i t x_j) = mean cos(t x) + i mean sin(t x)
+
+    The integrand is even in t, so it is integrated over [0, t_max] with the
+    trapezoid rule and doubled (the paper: 17 points over [-5, 5]). Averaged over
+    directions, as in the paper. A Gaussian match on every 1-D projection pins
+    down the whole distribution (Cramer-Wold), unlike VICReg, which only
+    constrains each dimension's spread and the pairwise correlations.
+    """
+    M, D = z.shape
+    a = torch.randn(D, num_slices, device=z.device)
+    a = a / a.norm(dim=0, keepdim=True)
+    x = z.float() @ a                                          # (M, S)
+    t = torch.linspace(0, t_max, num_points, device=z.device)  # (T,)
+    tx = x.unsqueeze(-1) * t                                   # (M, S, T)
+    re = torch.cos(tx).mean(0) - torch.exp(-t ** 2 / 2)        # (S, T)
+    im = torch.sin(tx).mean(0)
+    integrand = (re ** 2 + im ** 2) * torch.exp(-t ** 2)
+    ep = 2 * torch.trapezoid(integrand, t, dim=-1)             # (S,)
+    return M * ep.mean()
+
+
 def center_per_position(h: torch.Tensor) -> torch.Tensor:
     """
     h: (B, N, D) full-image tokens. Subtract, at every position, the mean over the

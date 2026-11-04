@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 import torch.nn.functional as F
 
-from loss import center_per_position, covariance_loss, invariance_loss, variance_loss, vicreg_loss
+from loss import center_per_position, covariance_loss, invariance_loss, sigreg_loss, variance_loss, vicreg_loss
 
 
 def main():
@@ -60,6 +60,24 @@ def main():
     assert variance_loss(pos_only) < 1.0, "token-level stats should be fooled (that is the loophole)"
     assert variance_loss(center_per_position(pos_only)) > 0.9 * D, "per-position should see collapse"
     assert variance_loss(center_per_position(content)) < 1.0, "real content should still pass"
+
+    # SIGReg: small for N(0, I); large for collapse to a point, for one direction carrying
+    # everything, and for images clustering on a few points. (Independent non-Gaussian
+    # coordinates, e.g. +-1, look Gaussian along a random direction by the CLT, so no
+    # sliced test sees them; what it sees is shape that survives projection.)
+    B, D = 64, 192
+    point = torch.zeros(B, D, requires_grad=True)
+    cases = {
+        "gauss": torch.randn(B, D),
+        "rank1": torch.randn(B, 1).expand(B, D) / D ** 0.5 * 3,
+        "4 clusters": torch.randn(4, D)[torch.randint(0, 4, (B,))],
+    }
+    s = {k: float(sigreg_loss(z)) for k, z in cases.items()}
+    s_point = sigreg_loss(point)
+    s_point.backward()
+    print("sigreg:", {k: round(v, 3) for k, v in s.items()}, f"point={float(s_point.detach()):.2f}")
+    assert s["gauss"] < 0.5 * min(s["rank1"], s["4 clusters"], float(s_point))
+    assert point.grad is not None and torch.isfinite(point.grad).all()
     print("OK")
 
 

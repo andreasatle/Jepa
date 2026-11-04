@@ -19,7 +19,10 @@ Deviations from the official recipe (see LEDGER.md for the measurements):
     instead of the official 85-100% block truncated to the shortest context in
     the batch (see masks.py).
 Switches kept for comparison: --no-ema (target = online output, stop-gradient),
---target-grad (no stop-gradient: "pure VICReg"), --vicreg-per-position.
+--target-grad (no stop-gradient: "pure VICReg"), --vicreg-per-position,
+--sigreg-weight L (LeJEPA's SIGReg on the mean-pooled online image embeddings:
+loss = (1 - L) * prediction + L * SIGReg; with --target-grad and VICReg off, the
+only thing resisting collapse, as in LeJEPA).
 
 Everything else follows the official code: target blocks (masks.py), ViT
 encoder + narrow predictor with its init (model.py), target LayerNorm +
@@ -48,7 +51,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from data import PathMNIST
-from loss import center_per_position, vicreg_loss
+from loss import center_per_position, sigreg_loss, vicreg_loss
 from masks import MultiBlockMasks
 from model import Encoder, Predictor, apply_masks
 
@@ -79,6 +82,11 @@ class Config:
     # True: VICReg on per-position-centred tokens (loss.center_per_position), so
     # differences between positions don't count as variance.
     vicreg_per_position: bool = False
+    # LeJEPA's SIGReg on the mean-pooled online image embeddings (B, D), weight lambda:
+    # loss = (1 - lambda) * (prediction + VICReg terms) + lambda * SIGReg. 0 = off.
+    # Paper default 0.05, 1024 random directions resampled every step.
+    sigreg_weight: float = 0.0
+    sigreg_slices: int = 1024
     # EMA target encoder (official I-JEPA): target = EMA copy of the encoder, no grad,
     # updated after every step with momentum ramped linearly ema_start -> ema_end.
     # False: target = the online encoder's output, gradient-stopped.
@@ -191,6 +199,7 @@ def train(cfg: Config, name: str):
         target_encoder = copy.deepcopy(encoder)
         target_encoder.requires_grad_(False)
     use_vicreg = bool(cfg.var_weight or cfg.cov_weight)
+    use_online = use_vicreg or bool(cfg.sigreg_weight)          # needs the online full image
 
     total = cfg.epochs * len(loader)
     warmup = round(cfg.warmup_epochs * len(loader))
@@ -200,7 +209,7 @@ def train(cfg: Config, name: str):
 
     log = open(os.path.join(out, "log.csv"), "w", newline="")
     writer = csv.writer(log)
-    writer.writerow(["epoch", "step", "loss", "inv", "var", "cov",
+    writer.writerow(["epoch", "step", "loss", "inv", "var", "cov", "sig",
                      "tok_std", "img_std", "img_rank", "lr", "wd", "img_per_s"])
 
     step, t0 = 0, time.time()
@@ -221,7 +230,7 @@ def train(cfg: Config, name: str):
             if cfg.ema:
                 with torch.no_grad():
                     h_tgt = target_encoder(imgs)                 # EMA teacher, full image
-                if use_vicreg:
+                if use_online:
                     h = encoder(imgs)
             else:
                 h = encoder(imgs)
@@ -231,6 +240,10 @@ def train(cfg: Config, name: str):
             pred = predictor(z_ctx, ctx_mask, ctx_keep, tgt_masks)   # (n_pred*B, K_tgt, D)
             reg = [] if h is None else [center_per_position(h) if cfg.vicreg_per_position else h]
             loss, parts = vicreg_loss(pred, target, reg, cfg.var_weight, cfg.cov_weight)
+            if cfg.sigreg_weight:
+                sig = sigreg_loss(h.mean(1), cfg.sigreg_slices)     # one embedding per image
+                loss = (1 - cfg.sigreg_weight) * loss + cfg.sigreg_weight * sig
+                parts["sig"], parts["loss"] = sig.detach(), loss.detach()
 
             opt.zero_grad(set_to_none=True)
             loss.backward()
@@ -246,11 +259,11 @@ def train(cfg: Config, name: str):
                 t0 = time.time()
                 p = {k: v.item() for k, v in parts.items()}
                 print(f"e{epoch} s{step}/{total}  loss {p['loss']:.4f}  inv {p['inv']:.4f}  "
-                      f"var {p.get('var', 0):.3f}  cov {p.get('cov', 0):.3f}  "
+                      f"var {p.get('var', 0):.3f}  cov {p.get('cov', 0):.3f}  sig {p.get('sig', 0):.3f}  "
                       f"tok_std {stats['tok_std']:.3f}  img_std {stats['img_std']:.3f}  "
                       f"img_rank {stats['img_rank']:.1f}  lr {lr:.2e}  {ips:.0f} img/s")
                 writer.writerow([epoch, step, p["loss"], p["inv"], p.get("var", 0),
-                                 p.get("cov", 0), stats["tok_std"], stats["img_std"],
+                                 p.get("cov", 0), p.get("sig", 0), stats["tok_std"], stats["img_std"],
                                  stats["img_rank"], lr, wd, ips])
                 log.flush()
 
@@ -286,6 +299,7 @@ if __name__ == "__main__":
     ap.add_argument("--no-ema", action="store_true", help="target = online output, stop-gradient (no EMA)")
     ap.add_argument("--var-weight", type=float, help="VICReg variance weight (default 0.5; 0 = off)")
     ap.add_argument("--cov-weight", type=float, help="VICReg covariance weight (default 0.5; 0 = off)")
+    ap.add_argument("--sigreg-weight", type=float, help="LeJEPA SIGReg weight lambda (default 0 = off; paper 0.05)")
     args = ap.parse_args()
     if args.smoke:
         train(SMOKE, "smoke")
@@ -309,4 +323,6 @@ if __name__ == "__main__":
             cfg = replace(cfg, var_weight=args.var_weight)
         if args.cov_weight is not None:
             cfg = replace(cfg, cov_weight=args.cov_weight)
+        if args.sigreg_weight is not None:
+            cfg = replace(cfg, sigreg_weight=args.sigreg_weight)
         train(cfg, args.name)

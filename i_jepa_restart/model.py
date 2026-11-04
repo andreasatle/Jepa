@@ -169,7 +169,11 @@ class Encoder(nn.Module):
 
     def forward(self, imgs: torch.Tensor, masks=None, keep: torch.Tensor = None) -> torch.Tensor:
         x = self.patch_embed(imgs).flatten(2).transpose(1, 2)    # (B, N, D), row-major patches
-        x = x + self.pos_embed                                    # content + position
+        pos = self.pos_embed
+        if x.shape[1] != self.num_patches:                       # another size (LeJEPA's local
+            grid = imgs.shape[-1] // self.patch_embed.stride[0]  # crops): fixed sin-cos is defined
+            pos = sincos_2d(self.embed_dim, grid)[None].to(x)     # for any grid
+        x = x + pos                                               # content + position
         # Drop patches AFTER adding positions, so each kept token knows where it sits.
         if masks is not None:
             x = apply_masks(x, masks)                             # (B, L, D)
