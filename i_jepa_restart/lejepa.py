@@ -16,9 +16,12 @@ One step, for a batch of B images, each cut into V = Vg global + Vl local views:
 Gradients flow through everything, the centers included. The probe uses the encoder's
 mean-pooled tokens (h), not the projector, as for train.py's runs.
 
-As in the authors' recipe (paper + repository): 2 global views at 224 px, crop scale
-0.3-1.0, and 6 local views at 96 px, scale 0.05-0.3, with DINO's augmentations (see
-data.MultiCrop); projector = 3-layer MLP with BatchNorm, hidden 2048; SIGReg with 1024
+Views: 2 global = the whole 224 px image, and 6 local = random 96 px windows, all at
+native resolution, never resized (no zoom: PathMNIST has one fixed magnification and cell
+size is diagnostic; the user, 2026-11-02). The authors' zoomed crops (global 224 px from
+scale 0.3-1.0, local 96 px from 0.05-0.3) are --zoom, about 1 point better here (LEDGER.md).
+As in the authors' recipe (paper + repository) otherwise: DINO's flips and colour
+augmentation (see data.MultiCrop); projector = 3-layer MLP with BatchNorm, hidden 2048; SIGReg with 1024
 random directions resampled every step, 17 points; AdamW, lr 5e-4 with one warmup
 epoch then cosine to lr/1000, constant weight decay 0.05. Scaled down: ViT-Tiny, batch
 128 (the paper recommends >= 128), 10 epochs.
@@ -57,7 +60,7 @@ class Config:
     patch_size: int = 16
     global_views: int = 2
     local_views: int = 6
-    zoom: bool = True            # False: crops at native resolution, never resized (data.MultiCrop)
+    zoom: bool = False           # True: the authors' resized crops (data.MultiCrop); False: native
     # Native windows of varying size, never resized (data.NativeWindows); overrides zoom.
     native_windows: bool = False
     global_sizes: tuple = (160, 176, 192, 208, 224)
@@ -220,7 +223,7 @@ if __name__ == "__main__":
     ap.add_argument("--sigreg-slices", type=int, help="random directions per view per step (default 1024)")
     ap.add_argument("--max-steps", type=int)
     ap.add_argument("--num-workers", type=int)
-    ap.add_argument("--no-zoom", action="store_true", help="crops at native resolution, never resized")
+    ap.add_argument("--zoom", action="store_true", help="the authors' resized crops (default: native, no zoom)")
     ap.add_argument("--native-windows", action="store_true", help="native windows of varying size")
     args = ap.parse_args()
     if args.smoke:
@@ -235,6 +238,6 @@ if __name__ == "__main__":
                 cfg = replace(cfg, **{field: value})
         if args.native_windows:
             cfg = replace(cfg, native_windows=True)
-        if args.no_zoom:
-            cfg = replace(cfg, zoom=False)
+        if args.zoom:
+            cfg = replace(cfg, zoom=True)
         train(cfg, args.name)

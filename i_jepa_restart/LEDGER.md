@@ -27,7 +27,7 @@ All runs: `--epochs 10 --batch-size 64 --lr 3e-4`. Encoder: width 192, depth 12,
 | `sigreg` | LeJEPA's SIGReg (λ 0.05, 1024 slices, on mean-pooled online tokens), gradients flow, no EMA, no VICReg | 0.715 / 0.592 | 0.704 / 0.546 |
 | **`lejepa`** (lejepa.py, best so far) | **none: LeJEPA, no EMA, no stop-gradient, no predictor**; 2 global + 6 local crops with colour augmentation, SIGReg λ 0.05 on a 64-dim projector, batch 128 | **0.954 / 0.970** | **0.970 / 0.980** |
 
-| `lejepa-nozoom` | as `lejepa`, `--no-zoom`: global = whole image, local = 96 px native windows, never resized | 0.948 / 0.953 | 0.959 / 0.966 |
+| `lejepa-nozoom` (**the default since 2026-11-04**; `lejepa` is now `--zoom`) | as `lejepa`, no zoom: global = whole image, local = 96 px native windows, never resized | 0.948 / 0.953 | 0.959 / 0.966 |
 | `lejepa-windows` | as `lejepa`, `--native-windows`: never resized; per batch one global size from 160-224 px and one local from 64-128 px | 0.950 / 0.957 | 0.959 / 0.968 |
 | `lejepa-nozoom-s16` | as `lejepa-nozoom`, `--sigreg-slices 16` (16 random directions per view per step instead of 1024) | 0.908 / 0.912 | 0.923 / 0.927 |
 
