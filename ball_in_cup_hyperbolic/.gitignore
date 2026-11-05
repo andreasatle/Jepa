@@ -1,0 +1,8 @@
+__pycache__/
+*.pt
+*.npz
+jepa_data/
+jepa_data_strided/
+jepa_eval_data/
+jepa_eval_data_strided/
+joint_snapshots/
