@@ -13,3 +13,5 @@ directory; paths in the code are relative to the current directory.
 - [`ball_in_cup/`](ball_in_cup/README.md) — JEPA world-model pretraining,
   representation probing, and CEM/MPC planning on dm_control's
   ball-in-cup catch task.
+
+- [`i_jepa_restart/`](i_jepa_restart/PLAN.md) — self-supervised learning on PathMNIST with LeJEPA (no EMA), one validated step at a time; started as a clean restart of I-JEPA, which stays there as the reference. `i_jepa/` is the earlier I-JEPA attempt, kept for reference.
