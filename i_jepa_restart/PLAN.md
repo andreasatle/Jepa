@@ -6,10 +6,11 @@ Self-supervised learning on PathMNIST. Started as a clean restart of the I-JEPA 
 
 Dataset: PathMNIST (9 tissue classes). Decided: keep the medical data.
 
-Success is measured by a classifier on the frozen encoder's embedding (a linear probe). Two candidate goal statements, not yet chosen:
+Success is measured by a classifier on the frozen encoder's embedding (a linear probe).
 
-1. **Plain:** close the gap between the floor (linear probe on a random-init encoder, 74.3% in the old setup) and the ceiling (supervised ResNet-18 trained end-to-end on all labels, ~91% in the MedMNIST v2 benchmark).
-2. **Label-scarce:** with only 1% of the labels, a linear classifier on frozen LeJEPA features beats the same network trained from scratch on that same 1%.
+**Chosen (the user, 2026-11-05): label-scarce.** With only 1% of the train labels (901 images, stratified by class), a linear classifier on frozen LeJEPA features beats a network trained from scratch on that same 1%. Two from-scratch baselines: the same ViT-Tiny (same network), and ResNet-18 (the strong standard one). Three labelled subsets (seeds 0–2), same subset for every arm. Fixed recipes, no early stopping or checkpoint picking on val (the 10k val labels would break the 1% budget); val for the comparison, test once at the end. Code: `probes/scarce.py`, results in `probes/scarce_results.csv`.
+
+The other candidate, **plain** (close the gap from the floor to a supervised ResNet-18 on all labels, ~91% in the MedMNIST v2 benchmark), looks already met: the full-label linear probe on LeJEPA reaches 92.8% on test (a different network and setup than the benchmark, so suggestive only).
 
 ## Two stages (labels only in stage 2)
 
@@ -30,7 +31,7 @@ Fine-tuning (unfreezing the encoder while training the classifier) is a differen
 
 ## Steps
 
-1. [ ] Choose the goal statement above.
+1. [x] Choose the goal statement above (label-scarce, 2026-11-05).
 2. [ ] Validate the measuring stick: the probes must clearly separate a random encoder (floor) from a known-good encoder (ceiling) before any training.
 3. [x] Minimal LeJEPA (paper recipe), trained and probed (I-JEPA before it, kept as reference).
 4. [ ] Changes one at a time, each recorded in `LEDGER.md`.

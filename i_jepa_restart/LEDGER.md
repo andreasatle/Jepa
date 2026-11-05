@@ -74,3 +74,18 @@ Findings:
 - **No ceiling** (known-good encoder) measured in this setup yet.
 - **Which part of LeJEPA's recipe matters:** EMA + the same crops and augmentation would separate SIGReg from the views.
 - **Hyperparameters** (4 blocks, block scale, EMA momentum) were tuned by the paper for EMA, ViT-H, ImageNet and batch 2048. Not re-tuned here.
+
+## Label-scarce test (PLAN.md goal; `probes/scarce.py`, 2026-11-05)
+
+1% of the train labels (901 images, stratified), the same subset for every arm, three subsets (seeds 0, 1, 2). Val accuracy. Encoder: `lejepa-nozoom` epoch 10. From-scratch arms: AdamW lr 1e-3, wd 0.05, batch 64, 100 epochs (5 warmup, cosine), LeJEPA's global-view augmentations, no early stopping.
+
+| Arm | Seed 0 | Seed 1 | Seed 2 | Mean |
+|---|---|---|---|---|
+| Linear probe, frozen LeJEPA | 91.4 | 92.3 | 91.0 | **91.6** |
+| k-NN, frozen LeJEPA | 88.1 | 88.5 | 88.0 | 88.2 |
+| ResNet-18 from scratch | 77.9 | 77.5 | 80.3 | 78.6 |
+| ViT-Tiny from scratch (same network) | 75.8 | 77.3 | 77.1 | 76.7 |
+| Linear probe, random encoder (floor) | 58.1 | 55.6 | 55.5 | 56.4 |
+
+- **The goal is met on val:** frozen LeJEPA features with 1% of the labels beat both from-scratch baselines by 13–15 points, far outside the seed spread (1–3 points). With all labels the same probe reaches 95.9, so 99% fewer labels cost about 4 points.
+- **Caveats:** the baselines use one fixed, untuned recipe. ResNet-18 nearly fits its 901 images (train 97–98%); the ViT underfits (train 79–84%), as ViTs from scratch on small data do. Tuning could add a few points to them, unlikely 13. Test split not touched yet.

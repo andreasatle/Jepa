@@ -1,0 +1,19 @@
+arm,frac,seed,n_labels,split,accuracy,note
+probe-linear lejepa-nozoom_e010,0.01,0,901,val,0.9140,train 1.000
+probe-knn lejepa-nozoom_e010,0.01,0,901,val,0.8805,
+probe-linear lejepa-nozoom_e010,0.01,1,901,val,0.9228,train 0.999
+probe-knn lejepa-nozoom_e010,0.01,1,901,val,0.8852,
+probe-linear lejepa-nozoom_e010,0.01,2,901,val,0.9098,train 0.998
+probe-knn lejepa-nozoom_e010,0.01,2,901,val,0.8803,
+probe-linear lejepa-nozoom_random,0.01,0,901,val,0.5807,train 0.866
+probe-knn lejepa-nozoom_random,0.01,0,901,val,0.5742,
+probe-linear lejepa-nozoom_random,0.01,1,901,val,0.5559,train 0.859
+probe-knn lejepa-nozoom_random,0.01,1,901,val,0.5680,
+probe-linear lejepa-nozoom_random,0.01,2,901,val,0.5546,train 0.858
+probe-knn lejepa-nozoom_random,0.01,2,901,val,0.5628,
+scratch-resnet18,0.01,0,901,val,0.7789,"train acc 0.972, 100 ep"
+scratch-resnet18,0.01,1,901,val,0.7745,"train acc 0.982, 100 ep"
+scratch-resnet18,0.01,2,901,val,0.8034,"train acc 0.972, 100 ep"
+scratch-vit,0.01,0,901,val,0.7575,"train acc 0.794, 100 ep"
+scratch-vit,0.01,1,901,val,0.7733,"train acc 0.821, 100 ep"
+scratch-vit,0.01,2,901,val,0.7706,"train acc 0.838, 100 ep"
