@@ -33,7 +33,7 @@ from lejepa import Config, Projector, lejepa_loss
 from loss import sigreg_loss
 from model import Encoder
 from probes.probe import LABELS
-from train import collapse_stats
+from ijepa import collapse_stats
 
 CLASSES = ["adipose", "background", "debris", "lymphocytes", "mucus", "smooth muscle",
            "normal mucosa", "stroma", "tumour epithelium"]

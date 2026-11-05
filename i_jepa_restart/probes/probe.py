@@ -104,7 +104,7 @@ def knn_probe(xtr, ytr, xev, yev, k=20, chunk=1024):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("ckpt", help="encoder snapshot from train.py (encoder_eXXX.pt)")
+    ap.add_argument("ckpt", help="encoder snapshot from ijepa.py (encoder_eXXX.pt)")
     ap.add_argument("--random", action="store_true", help="same config, random init (the floor)")
     ap.add_argument("--split", default="val", choices=["val", "test"])
     ap.add_argument("--limit", type=int, default=0)

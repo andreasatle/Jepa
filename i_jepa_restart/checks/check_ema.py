@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 
 from model import Encoder
-from train import ema_update
+from ijepa import ema_update
 
 
 def params(m):

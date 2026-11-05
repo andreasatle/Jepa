@@ -14,7 +14,7 @@ One step, for a batch of B images, each cut into V = Vg global + Vl local views:
     loss  = (1 - lambda) * pred + lambda * sig            # lambda = 0.05
 
 Gradients flow through everything, the centers included. The probe uses the encoder's
-mean-pooled tokens (h), not the projector, as for train.py's runs.
+mean-pooled tokens (h), not the projector, as for ijepa.py's runs.
 
 Views: 2 global = the whole 224 px image, and 6 local = random 96 px windows, all at
 native resolution, never resized (no zoom: PathMNIST has one fixed magnification and cell
@@ -26,7 +26,7 @@ random directions resampled every step, 17 points; AdamW, lr 5e-4 with one warmu
 epoch then cosine to lr/1000, constant weight decay 0.05. Scaled down: ViT-Tiny, batch
 128 (the paper recommends >= 128), 10 epochs.
 
-Outputs go to runs/<name>/, in the same format as train.py so probes/probe.py reads them.
+Outputs go to runs/<name>/, in the same format as ijepa.py so probes/probe.py reads them.
 
 Run:
     uv run python lejepa.py --name lejepa --epochs 10
@@ -48,7 +48,7 @@ from torch.utils.data import DataLoader
 from data import MultiCrop, NativeWindows, RawPathMNIST
 from loss import sigreg_loss
 from model import Encoder
-from train import collapse_stats, param_groups, pick_device
+from ijepa import collapse_stats, param_groups, pick_device
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -66,7 +66,7 @@ class Config:
     global_sizes: tuple = (160, 176, 192, 208, 224)
     local_sizes: tuple = (64, 80, 96, 112, 128)
 
-    embed_dim: int = 192         # ViT-Tiny, as train.py
+    embed_dim: int = 192         # ViT-Tiny, as ijepa.py
     depth: int = 12
     num_heads: int = 3
     proj_hidden: int = 2048

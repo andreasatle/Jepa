@@ -35,7 +35,7 @@ each epoch) and encoder_eXXX.pt snapshots for probing (with EMA: the target
 encoder, as in the paper's evaluation).
 
 Run:
-    uv run python train.py --name NAME --epochs 10 --batch-size 64 --lr 3e-4
+    uv run python ijepa.py --name NAME --epochs 10 --batch-size 64 --lr 3e-4
 """
 
 import argparse

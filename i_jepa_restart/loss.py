@@ -139,7 +139,7 @@ def vicreg_loss(pred, target, regularized=(), var_weight: float = 0.0,
     """
     pred, target: (..., D) predictor output and target embeddings of the hidden
                   patches. `target` is the encoder's own full-image output
-                  (gradient-stopped unless train.py's target_grad is on).
+                  (gradient-stopped unless ijepa.py's target_grad is on).
     regularized:  iterable of ONLINE embedding tensors (..., D) that the
                   variance / covariance terms act on (see module docstring).
     var_weight, cov_weight: 0 switches the term off (no compute).

@@ -1,5 +1,7 @@
 # Ledger
 
+The current method is LeJEPA (`lejepa.py`); I-JEPA (`ijepa.py`) is kept as the reference the comparisons below are made against. Only the LeJEPA runs and `ema-only-30` are kept in `runs/`; the other runs' numbers are recorded here.
+
 Every component in the code and what justifies it. Anything not listed here gets deleted.
 Changes are made one at a time and measured against the baseline with the same probes.
 
@@ -40,7 +42,7 @@ Findings:
   - First shortcut: position. The per-position fix closes it and recovers about 3 points.
   - The remaining gap is plausibly image-global appearance, e.g. stain colour: shared by context and target, varies between images. Not measured.
 - **EMA vs stop-gradient:** tied (+0.2 / +0.4, within noise) while VICReg was on.
-- **VICReg hurts once EMA is there:** EMA alone beats EMA + VICReg by 7.7 / 5.7 points. train.py still defaults to 0.5 / 0.5; switching the default to 0 is the next cleanup.
+- **VICReg hurts once EMA is there:** EMA alone beats EMA + VICReg by 7.7 / 5.7 points. ijepa.py still defaults to 0.5 / 0.5; switching the default to 0 is the next cleanup.
 - **LeJEPA, EMA-free, wins clearly** (2026-11-02): +8.4 / +4.9 on val over `ema-only` at 10 epochs, and on test after 10 epochs it beats `ema-only-30` after 30 by +11.1 / +12.5. Confounded: other views and augmentation (colour jitter, which plausibly carries over to the test centre's staining), batch 128 vs 64, a projector. So "the recipe wins", not yet "SIGReg beats EMA". `img_rank` 5-9 (vs 1.3-3.6 for `sigreg`); SIGReg falls 7.9 -> 1.7.
 - **Zoom (resizing crops) is worth 1-2 points** (2026-11-02): without it, val -1.1 / -1.4 and test -0.7 / -1.9 (one seed each). Zoom bakes in scale invariance, which is not justified at PathMNIST's fixed magnification (the user: "to build in bias by zooming sounds really bad"). Varying native window sizes (`lejepa-windows`) don't win it back: equal to `lejepa-nozoom` within noise. So the gap isn't missing variety; zoom's scale invariance (or its resampling blur) itself helped these probes a little.
 - **16 directions instead of 1024 costs 3.6 / 3.9 points on val, 1.9 / 2.1 on test** (2026-11-03, a breaking run): it still learns and doesn't collapse, but clearly worse; final SIGReg 1.72 vs 1.54, img_std 0.36 vs 0.43. Measured gradient noise from directions (on the trained no-zoom encoder, last projector layer) scales as 1/S: 12x the batch noise at S = 16, 0.2x at S = 1024, crossover ~200 per view (~25 with 8 independent views). The paper's "16 can be enough" does not carry over at batch 128 and 10 epochs.
@@ -56,14 +58,14 @@ Findings:
 | Official init (trunc-normal 0.02, residual layers scaled by 1/sqrt(2l)) | model.py | Official I-JEPA |
 | 4 target blocks, 15-20% of grid, aspect 0.75-1.5, size shared per batch | masks.py | Official I-JEPA |
 | Context = grid minus target union, padded + attention mask | masks.py, model.py | Decision: official truncation drops non-target patches (bottom rows) |
-| EMA target encoder, momentum 0.996 -> 1.0; probe the target encoder | train.py | Official I-JEPA; `ema-vicreg` ties stop-gradient |
+| EMA target encoder, momentum 0.996 -> 1.0; probe the target encoder | ijepa.py | Official I-JEPA; `ema-vicreg` ties stop-gradient |
 | Loss: smooth-L1 vs LayerNormed target | loss.py | Official I-JEPA |
-| VICReg variance + covariance, weights 0.5 / 0.5 by default | loss.py, train.py | Reproduces the runs above; loses to EMA alone |
-| SIGReg, `--sigreg-weight` (off by default) | loss.py, train.py | Reproduces run `sigreg`; checked in checks/check_loss.py |
+| VICReg variance + covariance, weights 0.5 / 0.5 by default | loss.py, ijepa.py | Reproduces the runs above; loses to EMA alone |
+| SIGReg, `--sigreg-weight` (off by default) | loss.py, ijepa.py | Reproduces run `sigreg`; checked in checks/check_loss.py |
 | RandomResizedCrop(0.3-1.0) only, ImageNet normalisation | data.py | Official I-JEPA |
-| AdamW, warmup + cosine lr, weight decay 0.04 -> 0.4 cosine, none on 1-D params | train.py | Official I-JEPA |
-| lr 3e-4 at batch 64 | train.py (CLI) | Linear scaling of the official lr gave 3e-5: `inv` barely moved in 2 epochs (run `short`) |
-| Switches `--no-ema`, `--target-grad`, `--vicreg-per-position` | train.py, loss.py | Reproduce the runs above; all lose to or tie the default |
+| AdamW, warmup + cosine lr, weight decay 0.04 -> 0.4 cosine, none on 1-D params | ijepa.py | Official I-JEPA |
+| lr 3e-4 at batch 64 | ijepa.py (CLI) | Linear scaling of the official lr gave 3e-5: `inv` barely moved in 2 epochs (run `short`) |
+| Switches `--no-ema`, `--target-grad`, `--vicreg-per-position` | ijepa.py, loss.py | Reproduce the runs above; all lose to or tie the default |
 
 ## Open
 

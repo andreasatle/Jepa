@@ -1,6 +1,6 @@
 # I-JEPA restart — plan
 
-Self-supervised learning on PathMNIST. Started as a clean restart of the I-JEPA experiment; since 2026-11-05 the method is **LeJEPA** (the user: "lets go all in on LeJepa"), because it beat I-JEPA with EMA by about 10 points on the test split (another clinical centre) in a third of the epochs, with a fixed objective and no EMA (LEDGER.md). I-JEPA (`train.py`) stays only as the ledger's reference; no further work on it, and no I-JEPA tutorial. The old `../i_jepa/` (v1–v4) stays as reference only; nothing is copied from it without being justified here first.
+Self-supervised learning on PathMNIST. Started as a clean restart of the I-JEPA experiment; since 2026-11-05 the method is **LeJEPA** (the user: "lets go all in on LeJepa"), because it beat I-JEPA with EMA by about 10 points on the test split (another clinical centre) in a third of the epochs, with a fixed objective and no EMA (LEDGER.md). I-JEPA (`ijepa.py`, renamed from `train.py` on 2026-11-05) stays only as the ledger's reference; no further work on it, and no I-JEPA tutorial. The old `../i_jepa/` (v1–v4) stays as reference only; nothing is copied from it without being justified here first.
 
 ## Goal (decide before any code)
 
@@ -40,7 +40,7 @@ Fine-tuning (unfreezing the encoder while training the classifier) is a differen
 - [ ] At the probe step: write a full reference section on the probes (linear, k-NN, and MLP only if used) — how each works mechanically, what it measures, fundamental vs. convenience, and how to read the numbers against the random-init baseline. All probes in one place.
 - [ ] Fix the I-JEPA page on atle.dev: it says "EMA-free", but v4 had the EMA teacher.
 - [ ] LeJEPA checks in `checks/`: the multi-crop views (sizes, count, native resolution) and SIGReg on known samples (a Gaussian sample near 0.52, a collapsed one near 0.131·n).
-- [ ] Naming after the switch to LeJEPA (2026-11-04; the user will decide later): the folder holds both methods, I-JEPA kept as the reference for the ledger's comparisons. Proposed: `train.py` -> `ijepa.py` (it is I-JEPA's trainer; `lejepa.py` imports its helpers from it), README and LEDGER headers saying LeJEPA is current and I-JEPA the reference. The folder name `i_jepa_restart` is the user's call; renaming it (e.g. `jepa_pathmnist`) breaks ledger paths and the probe cache. (The plan's Goal and Rules were updated on 2026-11-05.)
+- [ ] The folder name `i_jepa_restart` is the user's call (2026-11-05: `train.py` is now `ijepa.py`, and README, PLAN and LEDGER name LeJEPA as current); renaming the folder (e.g. `jepa_pathmnist`) breaks ledger paths and the probe cache.
 
 ## Terms
 
