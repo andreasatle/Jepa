@@ -17,3 +17,45 @@ scratch-resnet18,0.01,2,901,val,0.8034,"train acc 0.972, 100 ep"
 scratch-vit,0.01,0,901,val,0.7575,"train acc 0.794, 100 ep"
 scratch-vit,0.01,1,901,val,0.7733,"train acc 0.821, 100 ep"
 scratch-vit,0.01,2,901,val,0.7706,"train acc 0.838, 100 ep"
+probe-linear lejepa-nozoom_e010,0.01,0,901,test,0.8840,train 1.000
+probe-knn lejepa-nozoom_e010,0.01,0,901,test,0.8891,
+probe-linear lejepa-nozoom_random,0.01,0,901,test,0.5607,train 0.867
+probe-knn lejepa-nozoom_random,0.01,0,901,test,0.4997,
+probe-linear imagenet-resnet18,0.01,0,901,val,0.8926,train 1.000
+probe-knn imagenet-resnet18,0.01,0,901,val,0.8450,
+probe-linear imagenet-resnet18,0.01,0,901,test,0.8556,train 1.000
+probe-knn imagenet-resnet18,0.01,0,901,test,0.7957,
+probe-linear lejepa-nozoom_e010,0.01,1,901,test,0.8926,train 0.999
+probe-knn lejepa-nozoom_e010,0.01,1,901,test,0.8781,
+probe-linear lejepa-nozoom_random,0.01,1,901,test,0.5773,train 0.859
+probe-knn lejepa-nozoom_random,0.01,1,901,test,0.5265,
+probe-linear imagenet-resnet18,0.01,1,901,val,0.8997,train 1.000
+probe-knn imagenet-resnet18,0.01,1,901,val,0.8619,
+probe-linear imagenet-resnet18,0.01,1,901,test,0.8572,train 1.000
+probe-knn imagenet-resnet18,0.01,1,901,test,0.8235,
+probe-linear lejepa-nozoom_e010,0.01,2,901,test,0.8939,train 0.998
+probe-knn lejepa-nozoom_e010,0.01,2,901,test,0.8872,
+probe-linear lejepa-nozoom_random,0.01,2,901,test,0.5643,train 0.858
+probe-knn lejepa-nozoom_random,0.01,2,901,test,0.5279,
+probe-linear imagenet-resnet18,0.01,2,901,val,0.8939,train 1.000
+probe-knn imagenet-resnet18,0.01,2,901,val,0.8595,
+probe-linear imagenet-resnet18,0.01,2,901,test,0.8695,train 1.000
+probe-knn imagenet-resnet18,0.01,2,901,test,0.8208,
+scratch-resnet18-imagenet,0.01,0,901,val,0.9454,"train acc 0.999, 100 ep, lr 0.0001"
+scratch-resnet18-imagenet,0.01,0,901,test,0.9096,"train acc 0.999, 100 ep, lr 0.0001"
+scratch-resnet18-imagenet,0.01,1,901,val,0.9404,"train acc 0.999, 100 ep, lr 0.0001"
+scratch-resnet18-imagenet,0.01,1,901,test,0.8929,"train acc 0.999, 100 ep, lr 0.0001"
+scratch-resnet18-imagenet,0.01,2,901,val,0.9395,"train acc 1.000, 100 ep, lr 0.0001"
+scratch-resnet18-imagenet,0.01,2,901,test,0.8855,"train acc 1.000, 100 ep, lr 0.0001"
+scratch-resnet18,0.01,0,901,val,0.7789,"train acc 0.972, 100 ep, lr 0.001"
+scratch-resnet18,0.01,0,901,test,0.8106,"train acc 0.972, 100 ep, lr 0.001"
+scratch-resnet18,0.01,1,901,val,0.7745,"train acc 0.982, 100 ep, lr 0.001"
+scratch-resnet18,0.01,1,901,test,0.8053,"train acc 0.982, 100 ep, lr 0.001"
+scratch-resnet18,0.01,2,901,val,0.8034,"train acc 0.972, 100 ep, lr 0.001"
+scratch-resnet18,0.01,2,901,test,0.8309,"train acc 0.972, 100 ep, lr 0.001"
+scratch-vit,0.01,0,901,val,0.7575,"train acc 0.794, 100 ep, lr 0.001"
+scratch-vit,0.01,0,901,test,0.7851,"train acc 0.794, 100 ep, lr 0.001"
+scratch-vit,0.01,1,901,val,0.7733,"train acc 0.821, 100 ep, lr 0.001"
+scratch-vit,0.01,1,901,test,0.8032,"train acc 0.821, 100 ep, lr 0.001"
+scratch-vit,0.01,2,901,val,0.7706,"train acc 0.838, 100 ep, lr 0.001"
+scratch-vit,0.01,2,901,test,0.7777,"train acc 0.838, 100 ep, lr 0.001"

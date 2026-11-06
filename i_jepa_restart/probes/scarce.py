@@ -13,11 +13,18 @@ Three arms, each on the same labelled subset (one subset per seed):
             global views (flip, colour jitter, grayscale, blur, solarize; no resizing).
             Fixed recipe, no early stopping: in a label-scarce setting the 10k val labels
             can't be used to pick a checkpoint, so every arm is scored once at the end.
+            --arch resnet18-imagenet: the same ResNet-18 starting from ImageNet weights and
+            fine-tuned (lr 1e-4, the standard for fine-tuning): what pathology uses in practice.
+  imagenet  frozen ImageNet ResNet-18 features (512-d, global average pool), the same linear
+            probe and k-NN as the probe arm: the like-for-like comparison with frozen LeJEPA.
 
     uv run python probes/scarce.py probe runs/lejepa-nozoom/encoder_e010.pt --seed 0
     uv run python probes/scarce.py probe runs/lejepa-nozoom/encoder_e010.pt --random --seed 0
     uv run python probes/scarce.py scratch --arch resnet18 --seed 0
+    uv run python probes/scarce.py imagenet --seed 0
     options: --frac F (default 0.01)   --split val|test (test only for the final number)
+    The scratch arm scores val and test both at the end of its fixed recipe (nothing is chosen
+    from either), so a network is trained once.
 
 Results are appended to probes/scarce_results.csv.
 """
@@ -67,18 +74,34 @@ def record(arm: str, args, n: int, acc: float, extra: str = "") -> None:
 
 # ---- probe arm: frozen features, fitted on the subset ------------------------------------
 
+class ImageNetFeatures(nn.Module):
+    """ImageNet ResNet-18 without its head, as one 'token' per image so probe.embed's mean-pool fits."""
+
+    def __init__(self):
+        super().__init__()
+        net = torchvision.models.resnet18(weights=torchvision.models.ResNet18_Weights.IMAGENET1K_V1)
+        net.fc = nn.Identity()
+        self.net = net
+
+    def forward(self, x):
+        return self.net(x).unsqueeze(1)                 # (B, 1, 512)
+
+
 def run_probe(args):
     device = pick_device()
-    ck = torch.load(args.ckpt, map_location="cpu")
-    cfg = ck["config"]
-    torch.manual_seed(cfg["seed"])
-    encoder = Encoder(cfg["img_size"], cfg["patch_size"], 3, cfg["embed_dim"], cfg["depth"],
-                      cfg["num_heads"])
-    if not args.random:
-        encoder.load_state_dict(ck["encoder"])
+    if args.arm == "imagenet":
+        encoder, name = ImageNetFeatures(), "imagenet-resnet18"
+    else:
+        ck = torch.load(args.ckpt, map_location="cpu")
+        cfg = ck["config"]
+        torch.manual_seed(cfg["seed"])
+        encoder = Encoder(cfg["img_size"], cfg["patch_size"], 3, cfg["embed_dim"], cfg["depth"],
+                          cfg["num_heads"])
+        if not args.random:
+            encoder.load_state_dict(ck["encoder"])
+        run = os.path.basename(os.path.dirname(os.path.abspath(args.ckpt)))
+        name = f"{run}_random" if args.random else f"{run}_e{ck['epoch']:03d}"
     encoder.to(device).eval()
-    run = os.path.basename(os.path.dirname(os.path.abspath(args.ckpt)))
-    name = f"{run}_random" if args.random else f"{run}_e{ck['epoch']:03d}"
 
     feats = {}
     for split in ["train", args.split]:                 # same cache as probes/probe.py
@@ -135,6 +158,10 @@ class ViTClassifier(nn.Module):
 def build(arch: str) -> nn.Module:
     if arch == "vit":
         return ViTClassifier()
+    if arch == "resnet18-imagenet":
+        net = torchvision.models.resnet18(weights=torchvision.models.ResNet18_Weights.IMAGENET1K_V1)
+        net.fc = nn.Linear(net.fc.in_features, 9)
+        return net
     return torchvision.models.resnet18(weights=None, num_classes=9)
 
 
@@ -157,7 +184,8 @@ def run_scratch(args):
     it = iter(loader)                                   # fork the workers before MPS is touched
     device = pick_device()
     model = build(args.arch).to(device)
-    opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.05)
+    lr = args.lr or (1e-4 if args.arch == "resnet18-imagenet" else 1e-3)
+    opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.05)
     steps, warmup = args.epochs * len(loader), 5 * len(loader)
     sched = torch.optim.lr_scheduler.LambdaLR(
         opt, lambda s: (s + 1) / warmup if s < warmup
@@ -185,25 +213,28 @@ def run_scratch(args):
         if epoch % 10 == 9 or epoch == args.epochs - 1:
             print(f"e{epoch + 1}  loss {tot / n:.3f}  train acc {correct / n:.3f}  {time.time() - t:.0f}s",
                   flush=True)
-    acc = evaluate(model, args.split, device)
-    print(f"scratch-{args.arch}  {len(idx)} labels  [{args.split}]  accuracy {acc:.3f}")
-    record(f"scratch-{args.arch}", args, len(idx), acc, f"train acc {correct / n:.3f}, {args.epochs} ep")
+    for split in ["val", "test"]:
+        acc = evaluate(model, split, device)
+        print(f"scratch-{args.arch}  {len(idx)} labels  [{split}]  accuracy {acc:.3f}")
+        args.split = split
+        record(f"scratch-{args.arch}", args, len(idx), acc,
+               f"train acc {correct / n:.3f}, {args.epochs} ep, lr {lr:g}")
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("arm", choices=["probe", "scratch"])
+    ap.add_argument("arm", choices=["probe", "scratch", "imagenet"])
     ap.add_argument("ckpt", nargs="?", help="probe arm: encoder snapshot (encoder_eXXX.pt)")
     ap.add_argument("--random", action="store_true", help="probe arm: same config, random init (the floor)")
-    ap.add_argument("--arch", default="resnet18", choices=["resnet18", "vit"])
+    ap.add_argument("--arch", default="resnet18", choices=["resnet18", "vit", "resnet18-imagenet"])
     ap.add_argument("--frac", type=float, default=0.01)
     ap.add_argument("--seed", type=int, default=0, help="which labelled subset (and init)")
     ap.add_argument("--split", default="val", choices=["val", "test"])
     ap.add_argument("--epochs", type=int, default=100)
     ap.add_argument("--batch-size", type=int, default=64)
-    ap.add_argument("--lr", type=float, default=1e-3)
+    ap.add_argument("--lr", type=float, help="default 1e-3 from scratch, 1e-4 fine-tuning ImageNet weights")
     args = ap.parse_args()
-    run_probe(args) if args.arm == "probe" else run_scratch(args)
+    run_scratch(args) if args.arm == "scratch" else run_probe(args)
 
 
 def pick_device() -> torch.device:

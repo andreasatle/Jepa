@@ -88,4 +88,24 @@ Findings:
 | Linear probe, random encoder (floor) | 58.1 | 55.6 | 55.5 | 56.4 |
 
 - **The goal is met on val:** frozen LeJEPA features with 1% of the labels beat both from-scratch baselines by 13–15 points, far outside the seed spread (1–3 points). With all labels the same probe reaches 95.9, so 99% fewer labels cost about 4 points.
-- **Caveats:** the baselines use one fixed, untuned recipe. ResNet-18 nearly fits its 901 images (train 97–98%); the ViT underfits (train 79–84%), as ViTs from scratch on small data do. Tuning could add a few points to them, unlikely 13. Test split not touched yet.
+- **Caveats:** the baselines use one fixed, untuned recipe. ResNet-18 nearly fits its 901 images (train 97–98%); the ViT underfits (train 79–84%), as ViTs from scratch on small data do. Tuning could add a few points to them, unlikely 13. Test split: see the final pass below.
+
+### Final pass: test split and the ImageNet baseline (2026-11-06, `probes/scarce_all.sh`)
+
+Every arm on val and test, three subsets; mean (seeds 0/1/2). The test split comes from another clinical centre. Trained networks are scored on val and test at the end of their fixed recipe, nothing chosen from either; the from-scratch reruns reproduced their val numbers exactly. ImageNet arms: torchvision ResNet-18 `IMAGENET1K_V1`, frozen (512-d pooled features, the same probes) or fine-tuned end to end (AdamW lr 1e-4, the standard fine-tuning rate, otherwise the from-scratch recipe).
+
+| Arm | Val | Test |
+|---|---|---|
+| ImageNet ResNet-18, fine-tuned | **94.2** (94.5/94.0/94.0) | **89.6** (91.0/89.3/88.5) |
+| Linear probe, frozen LeJEPA | 91.6 | 89.0 (88.4/89.3/89.4) |
+| Linear probe, frozen ImageNet ResNet-18 | 89.5 (89.3/90.0/89.4) | 86.1 (85.6/85.7/87.0) |
+| k-NN, frozen LeJEPA | 88.2 | 88.5 (88.9/87.8/88.7) |
+| k-NN, frozen ImageNet ResNet-18 | 85.5 | 81.3 |
+| ResNet-18 from scratch | 78.6 | 81.6 (81.1/80.5/83.1) |
+| ViT-Tiny from scratch | 76.7 | 78.9 (78.5/80.3/77.8) |
+| Linear probe, random encoder (floor) | 56.4 | 56.7 (56.1/57.7/56.4) |
+
+- **The stated goal holds on test:** frozen LeJEPA beats both from-scratch networks by 7–10 points (89.0 vs 81.6 and 78.9).
+- **Frozen vs frozen, LeJEPA wins:** +2.1 on val and +2.9 on test over ImageNet features, and the k-NN gap is larger (+7 on test): LeJEPA's neighbourhoods are tissue, ImageNet's less so. LeJEPA saw 90k unlabelled tissue images for 10 epochs on a ViT-Tiny; ImageNet saw 1.28M labelled photos.
+- **But fine-tuned ImageNet is the strongest arm:** 94.2 on val, 2.6 above frozen LeJEPA; on the other centre's images the lead shrinks to 0.6, inside the seed spread. Frozen vs fine-tuned is not like for like: fine-tuning LeJEPA on the same 901 labels is the missing arm.
+- **Domain shift:** fine-tuned ImageNet loses 4.6 points from val to test, frozen LeJEPA 2.6, k-NN on LeJEPA 0 (88.2 → 88.5).
