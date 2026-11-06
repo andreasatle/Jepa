@@ -97,6 +97,7 @@ Every arm on val and test, three subsets; mean (seeds 0/1/2). The test split com
 | Arm | Val | Test |
 |---|---|---|
 | ImageNet ResNet-18, fine-tuned | **94.2** (94.5/94.0/94.0) | **89.6** (91.0/89.3/88.5) |
+| LeJEPA ViT-Tiny, fine-tuned (`--init`, same recipe as ImageNet's) | 92.1 (91.8/92.1/92.3) | 89.5 (89.4/89.7/89.5) |
 | Linear probe, frozen LeJEPA | 91.6 | 89.0 (88.4/89.3/89.4) |
 | Linear probe, frozen ImageNet ResNet-18 | 89.5 (89.3/90.0/89.4) | 86.1 (85.6/85.7/87.0) |
 | k-NN, frozen LeJEPA | 88.2 | 88.5 (88.9/87.8/88.7) |
@@ -108,4 +109,5 @@ Every arm on val and test, three subsets; mean (seeds 0/1/2). The test split com
 - **The stated goal holds on test:** frozen LeJEPA beats both from-scratch networks by 7–10 points (89.0 vs 81.6 and 78.9).
 - **Frozen vs frozen, LeJEPA wins:** +2.1 on val and +2.9 on test over ImageNet features, and the k-NN gap is larger (+7 on test): LeJEPA's neighbourhoods are tissue, ImageNet's less so. LeJEPA saw 90k unlabelled tissue images for 10 epochs on a ViT-Tiny; ImageNet saw 1.28M labelled photos.
 - **But fine-tuned ImageNet is the strongest arm:** 94.2 on val, 2.6 above frozen LeJEPA; on the other centre's images the lead shrinks to 0.6, inside the seed spread. Frozen vs fine-tuned is not like for like: fine-tuning LeJEPA on the same 901 labels is the missing arm.
+- **Fine-tuning LeJEPA (the missing arm, run after):** 92.1 val, 89.5 test, +0.5 over its frozen probe on both. Against fine-tuned ImageNet: a tie on test (89.5 vs 89.6), 2.1 behind on val. So on the other centre's images, 10 epochs of LeJEPA on 90k unlabelled tissue images match ImageNet pretraining; on the training centre's own images ImageNet fine-tuning is ahead. Bigger LeJEPA pretraining (epochs, model) is the obvious lever; not tried.
 - **Domain shift:** fine-tuned ImageNet loses 4.6 points from val to test, frozen LeJEPA 2.6, k-NN on LeJEPA 0 (88.2 → 88.5).

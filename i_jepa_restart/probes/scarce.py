@@ -15,6 +15,8 @@ Three arms, each on the same labelled subset (one subset per seed):
             can't be used to pick a checkpoint, so every arm is scored once at the end.
             --arch resnet18-imagenet: the same ResNet-18 starting from ImageNet weights and
             fine-tuned (lr 1e-4, the standard for fine-tuning): what pathology uses in practice.
+            --init CKPT (with --arch vit): start the ViT from a LeJEPA encoder snapshot and
+            fine-tune it the same way (lr 1e-4): like for like with the ImageNet arm.
   imagenet  frozen ImageNet ResNet-18 features (512-d, global average pool), the same linear
             probe and k-NN as the probe arm: the like-for-like comparison with frozen LeJEPA.
 
@@ -183,8 +185,12 @@ def run_scratch(args):
                         num_workers=6, multiprocessing_context="fork", persistent_workers=True)
     it = iter(loader)                                   # fork the workers before MPS is touched
     device = pick_device()
-    model = build(args.arch).to(device)
-    lr = args.lr or (1e-4 if args.arch == "resnet18-imagenet" else 1e-3)
+    model = build(args.arch)
+    pretrained = args.arch == "resnet18-imagenet" or args.init is not None
+    if args.init:
+        model.encoder.load_state_dict(torch.load(args.init, map_location="cpu")["encoder"])
+    model.to(device)
+    lr = args.lr or (1e-4 if pretrained else 1e-3)
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.05)
     steps, warmup = args.epochs * len(loader), 5 * len(loader)
     sched = torch.optim.lr_scheduler.LambdaLR(
@@ -215,9 +221,10 @@ def run_scratch(args):
                   flush=True)
     for split in ["val", "test"]:
         acc = evaluate(model, split, device)
-        print(f"scratch-{args.arch}  {len(idx)} labels  [{split}]  accuracy {acc:.3f}")
+        arm = f"finetune-{args.arch}-lejepa" if args.init else f"scratch-{args.arch}"
+        print(f"{arm}  {len(idx)} labels  [{split}]  accuracy {acc:.3f}")
         args.split = split
-        record(f"scratch-{args.arch}", args, len(idx), acc,
+        record(arm, args, len(idx), acc,
                f"train acc {correct / n:.3f}, {args.epochs} ep, lr {lr:g}")
 
 
@@ -230,6 +237,7 @@ def main():
     ap.add_argument("--frac", type=float, default=0.01)
     ap.add_argument("--seed", type=int, default=0, help="which labelled subset (and init)")
     ap.add_argument("--split", default="val", choices=["val", "test"])
+    ap.add_argument("--init", help="scratch arm, --arch vit: LeJEPA encoder snapshot to fine-tune from")
     ap.add_argument("--epochs", type=int, default=100)
     ap.add_argument("--batch-size", type=int, default=64)
     ap.add_argument("--lr", type=float, help="default 1e-3 from scratch, 1e-4 fine-tuning ImageNet weights")
