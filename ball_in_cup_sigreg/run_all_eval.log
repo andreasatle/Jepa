@@ -1,0 +1,67 @@
+Loaded 100 episodes, 16600 examples (k_context=3, unroll_steps=5, stride=5).
+recalibrated BatchNorm over 63 batches; running mean moved 1.40 std per dim on average
+Using device: mps
+Loaded encoder from jepa_checkpoint_strided.pt (k_context=3, latent_dim=32)
+Loaded 20 eval episodes from jepa_eval_data/
+16 train episodes, 4 held-out episodes  (3216/804 single frames, 3184/796 3-frame windows, train/test)
+
+Probe 1 (strided model): single-frame z -> position
+Fit rank: 33/33 (feature dim + 1 bias column)
+dim           train R^2   test R^2
+cup_x            0.9388     0.9262
+cup_z            0.9439     0.9376
+ball_x           0.9907     0.9872
+ball_z           0.9735     0.9660
+mean             0.9617     0.9543
+
+Probe 2 (strided model): 3-frame window of z's -> position + velocity
+Fit rank: 97/97 (feature dim + 1 bias column)
+dim           train R^2   test R^2
+cup_x            0.9526     0.9389
+cup_z            0.9534     0.9479
+ball_x           0.9938     0.9909
+ball_z           0.9810     0.9720
+cup_x_vel        0.4421     0.4707
+cup_z_vel        0.3830     0.4110
+ball_x_vel       0.8390     0.8088
+ball_z_vel       0.7450     0.7433
+mean             0.7863     0.7854
+
+Saved position_probe_strided.npz and state_probe_strided.npz.
+Using device: mps
+Loaded encoder from jepa_checkpoint_strided.pt (latent_dim=32)
+Loaded 20 eval episodes from jepa_eval_data/
+16 train episodes, 4 held-out episodes  (3216/804 single frames, train/test)
+
+Training MLP probe (single-frame z -> position)...
+  epoch   50/300  train_loss=0.0145  train_R2=0.9859  test_R2=0.9751
+  epoch  100/300  train_loss=0.0111  train_R2=0.9894  test_R2=0.9766
+  epoch  150/300  train_loss=0.0093  train_R2=0.9909  test_R2=0.9769
+  epoch  200/300  train_loss=0.0079  train_R2=0.9922  test_R2=0.9771
+  epoch  250/300  train_loss=0.0069  train_R2=0.9928  test_R2=0.9768
+  epoch  300/300  train_loss=0.0063  train_R2=0.9937  test_R2=0.9764
+
+MLP probe -- final per-dim R^2
+dim           train R^2   test R^2
+cup_x            0.9890     0.9558
+cup_z            0.9894     0.9619
+ball_x           0.9988     0.9965
+ball_z           0.9977     0.9912
+mean             0.9937     0.9764
+
+Ball position L2 error (test set): mean=0.0068m  median=0.0052m  max=0.0812m
+(compare to drift_diagnostic_strided.py's tau=0 linear-probe number: 0.0827m)
+
+Saved MLP probe to position_probe_strided_mlp.pt
+100 (episode, start) rollouts, each 30 P-calls (150 real steps, 3.00s).
+
+tau (calls)   real s   cup L2 err (m)    ball L2 err (m)   ball z-vel err (m/s)
+          0     0.00           0.0464             0.0740                     --
+          5     0.50           0.0441             0.0918                 0.5033
+         10     1.00           0.0429             0.0950                 0.5871
+         15     1.50           0.0450             0.0899                 0.5436
+         20     2.00           0.0445             0.0905                 0.5943
+         25     2.50           0.0419             0.0779                 0.5866
+         29     2.90           0.0437             0.0998                 0.5519
+
+Ball position error first exceeds the task's own success tolerance (0.025 m) at tau=0 calls (0.00s of rollout).

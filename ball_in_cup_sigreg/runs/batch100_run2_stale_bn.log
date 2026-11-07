@@ -1,0 +1,105 @@
+Using probe: position_probe_strided_mlp.pt (MLP)
+trial  1/100: not solved, closest 0.1294m @ step 720
+trial  2/100: not solved, closest 0.0972m @ step 1005
+trial  3/100: not solved, closest 0.0860m @ step 5
+trial  4/100: not solved, closest 0.0968m @ step 1010
+trial  5/100: not solved, closest 0.0742m @ step 870
+trial  6/100: not solved, closest 0.0861m @ step 785
+trial  7/100: not solved, closest 0.1553m @ step 355
+trial  8/100: SOLVED at 0.30s
+trial  9/100: not solved, closest 0.1154m @ step 1000
+trial 10/100: not solved, closest 0.0908m @ step 1010
+trial 11/100: SOLVED at 13.70s
+trial 12/100: not solved, closest 0.1034m @ step 1000
+trial 13/100: not solved, closest 0.1268m @ step 5
+trial 14/100: SOLVED at 0.20s
+trial 15/100: not solved, closest 0.1806m @ step 1000
+trial 16/100: not solved, closest 0.1244m @ step 970
+trial 17/100: SOLVED at 20.20s
+trial 18/100: SOLVED at 20.60s
+trial 19/100: not solved, closest 0.1554m @ step 1000
+trial 20/100: SOLVED at 0.30s
+trial 21/100: not solved, closest 0.1088m @ step 65
+trial 22/100: SOLVED at 20.20s
+trial 23/100: SOLVED at 0.30s
+trial 24/100: not solved, closest 0.1494m @ step 5
+trial 25/100: not solved, closest 0.0810m @ step 115
+trial 26/100: SOLVED at 0.20s
+trial 27/100: SOLVED at 0.30s
+trial 28/100: not solved, closest 0.0874m @ step 5
+trial 29/100: not solved, closest 0.1091m @ step 1005
+trial 30/100: not solved, closest 0.0819m @ step 180
+trial 31/100: not solved, closest 0.1218m @ step 10
+trial 32/100: not solved, closest 0.0877m @ step 1010
+trial 33/100: not solved, closest 0.0944m @ step 525
+trial 34/100: SOLVED at 18.70s
+trial 35/100: not solved, closest 0.1484m @ step 1005
+trial 36/100: not solved, closest 0.0911m @ step 5
+trial 37/100: not solved, closest 0.0779m @ step 5
+trial 38/100: SOLVED at 0.20s
+trial 39/100: SOLVED at 0.30s
+trial 40/100: not solved, closest 0.1281m @ step 815
+trial 41/100: not solved, closest 0.1116m @ step 375
+trial 42/100: not solved, closest 0.0881m @ step 1005
+trial 43/100: not solved, closest 0.1270m @ step 985
+trial 44/100: not solved, closest 0.0986m @ step 1000
+trial 45/100: not solved, closest 0.0889m @ step 5
+trial 46/100: not solved, closest 0.0856m @ step 1005
+trial 47/100: not solved, closest 0.1019m @ step 1000
+trial 48/100: not solved, closest 0.0923m @ step 1005
+trial 49/100: SOLVED at 20.60s
+trial 50/100: SOLVED at 20.40s
+trial 51/100: SOLVED at 14.90s
+trial 52/100: not solved, closest 0.1233m @ step 1000
+trial 53/100: not solved, closest 0.0856m @ step 5
+trial 54/100: SOLVED at 23.20s
+trial 55/100: not solved, closest 0.1358m @ step 10
+trial 56/100: not solved, closest 0.0952m @ step 1005
+trial 57/100: SOLVED at 1.10s
+trial 58/100: SOLVED at 20.30s
+trial 59/100: not solved, closest 0.1229m @ step 530
+trial 60/100: not solved, closest 0.1556m @ step 1000
+trial 61/100: not solved, closest 0.0882m @ step 650
+trial 62/100: not solved, closest 0.0828m @ step 350
+trial 63/100: not solved, closest 0.0839m @ step 45
+trial 64/100: not solved, closest 0.0866m @ step 1005
+trial 65/100: not solved, closest 0.0914m @ step 1005
+trial 66/100: not solved, closest 0.1395m @ step 1000
+trial 67/100: not solved, closest 0.0931m @ step 1000
+trial 68/100: not solved, closest 0.0685m @ step 355
+trial 69/100: SOLVED at 0.20s
+trial 70/100: SOLVED at 0.20s
+trial 71/100: not solved, closest 0.1251m @ step 1005
+trial 72/100: not solved, closest 0.1267m @ step 1000
+trial 73/100: SOLVED at 0.20s
+trial 74/100: not solved, closest 0.0996m @ step 875
+trial 75/100: not solved, closest 0.0905m @ step 790
+trial 76/100: not solved, closest 0.0736m @ step 365
+trial 77/100: not solved, closest 0.1016m @ step 5
+trial 78/100: not solved, closest 0.0819m @ step 1010
+trial 79/100: SOLVED at 0.10s
+trial 80/100: not solved, closest 0.0906m @ step 1010
+trial 81/100: not solved, closest 0.1098m @ step 10
+trial 82/100: not solved, closest 0.0950m @ step 1000
+trial 83/100: not solved, closest 0.0753m @ step 1020
+trial 84/100: not solved, closest 0.0933m @ step 1010
+trial 85/100: not solved, closest 0.0890m @ step 5
+trial 86/100: not solved, closest 0.1522m @ step 1000
+trial 87/100: SOLVED at 0.30s
+trial 88/100: SOLVED at 20.30s
+trial 89/100: not solved, closest 0.1608m @ step 1000
+trial 90/100: not solved, closest 0.0939m @ step 1010
+trial 91/100: not solved, closest 0.0769m @ step 850
+trial 92/100: not solved, closest 0.0767m @ step 900
+trial 93/100: SOLVED at 0.30s
+trial 94/100: not solved, closest 0.0892m @ step 5
+trial 95/100: not solved, closest 0.1741m @ step 1000
+trial 96/100: SOLVED at 20.30s
+trial 97/100: not solved, closest 0.0802m @ step 1005
+trial 98/100: SOLVED at 20.20s
+trial 99/100: not solved, closest 0.0926m @ step 595
+trial 100/100: SOLVED at 0.30s
+
+success rate: 29/100
+solve times (s): mean=8.91  min=0.10  max=23.20
+closest approach (m), all trials: mean=0.0812  min=0.0108  max=0.1806

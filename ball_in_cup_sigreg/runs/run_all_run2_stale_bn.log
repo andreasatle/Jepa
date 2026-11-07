@@ -1,0 +1,420 @@
+jepa_train_strided.py -- PREDICTOR_STRIDE=5, UNROLL_STEPS=5 (jepa_train.py version: v7)
+Using device: mps
+Loaded 100 episodes, 16600 examples (k_context=3, unroll_steps=5, stride=5).
+No jepa_checkpoint_strided.pt found -- starting fresh.
+epoch 1/350  avg_loss=1.484358  avg_inv_loss=9.762337  avg_sigreg=8.742122  avg_raw_z_norm=4.259
+epoch 2/350  avg_loss=0.919451  avg_inv_loss=8.550995  avg_sigreg=3.850138  avg_raw_z_norm=4.754
+epoch 3/350  avg_loss=0.799983  avg_inv_loss=7.291656  avg_sigreg=3.442541  avg_raw_z_norm=4.877
+epoch 4/350  avg_loss=0.748678  avg_inv_loss=6.861168  avg_sigreg=3.198546  avg_raw_z_norm=4.935
+epoch 5/350  avg_loss=0.712458  avg_inv_loss=6.500925  avg_sigreg=3.061507  avg_raw_z_norm=4.974
+epoch 6/350  avg_loss=0.679846  avg_inv_loss=6.146749  avg_sigreg=2.956741  avg_raw_z_norm=5.003
+epoch 7/350  avg_loss=0.650909  avg_inv_loss=5.830835  avg_sigreg=2.864821  avg_raw_z_norm=5.033
+epoch 8/350  avg_loss=0.624386  avg_inv_loss=5.523695  avg_sigreg=2.791555  avg_raw_z_norm=5.055
+epoch 9/350  avg_loss=0.598615  avg_inv_loss=5.263643  avg_sigreg=2.696374  avg_raw_z_norm=5.075
+epoch 10/350  avg_loss=0.580991  avg_inv_loss=5.057155  avg_sigreg=2.649191  avg_raw_z_norm=5.094
+epoch 11/350  avg_loss=0.563764  avg_inv_loss=4.872018  avg_sigreg=2.592625  avg_raw_z_norm=5.104
+epoch 12/350  avg_loss=0.549067  avg_inv_loss=4.703778  avg_sigreg=2.550807  avg_raw_z_norm=5.122
+epoch 13/350  avg_loss=0.534702  avg_inv_loss=4.553402  avg_sigreg=2.501141  avg_raw_z_norm=5.140
+epoch 14/350  avg_loss=0.524773  avg_inv_loss=4.429663  avg_sigreg=2.479195  avg_raw_z_norm=5.145
+epoch 15/350  avg_loss=0.514533  avg_inv_loss=4.329006  avg_sigreg=2.439699  avg_raw_z_norm=5.152
+epoch 16/350  avg_loss=0.507220  avg_inv_loss=4.228756  avg_sigreg=2.429227  avg_raw_z_norm=5.164
+epoch 17/350  avg_loss=0.500648  avg_inv_loss=4.146862  avg_sigreg=2.414693  avg_raw_z_norm=5.173
+epoch 18/350  avg_loss=0.492888  avg_inv_loss=4.036227  avg_sigreg=2.406242  avg_raw_z_norm=5.179
+epoch 19/350  avg_loss=0.482268  avg_inv_loss=3.912935  avg_sigreg=2.377093  avg_raw_z_norm=5.183
+epoch 20/350  avg_loss=0.476651  avg_inv_loss=3.818290  avg_sigreg=2.380083  avg_raw_z_norm=5.193
+epoch 21/350  avg_loss=0.470122  avg_inv_loss=3.762700  avg_sigreg=2.349536  avg_raw_z_norm=5.201
+epoch 22/350  avg_loss=0.463051  avg_inv_loss=3.660766  avg_sigreg=2.342534  avg_raw_z_norm=5.202
+epoch 23/350  avg_loss=0.459858  avg_inv_loss=3.598686  avg_sigreg=2.349402  avg_raw_z_norm=5.212
+epoch 24/350  avg_loss=0.449954  avg_inv_loss=3.521783  avg_sigreg=2.298429  avg_raw_z_norm=5.218
+epoch 25/350  avg_loss=0.447082  avg_inv_loss=3.463120  avg_sigreg=2.306368  avg_raw_z_norm=5.224
+epoch 26/350  avg_loss=0.443862  avg_inv_loss=3.406655  avg_sigreg=2.309457  avg_raw_z_norm=5.232
+epoch 27/350  avg_loss=0.438090  avg_inv_loss=3.346193  avg_sigreg=2.289527  avg_raw_z_norm=5.231
+epoch 28/350  avg_loss=0.431979  avg_inv_loss=3.273464  avg_sigreg=2.273870  avg_raw_z_norm=5.233
+epoch 29/350  avg_loss=0.427624  avg_inv_loss=3.228527  avg_sigreg=2.258408  avg_raw_z_norm=5.242
+epoch 30/350  avg_loss=0.426092  avg_inv_loss=3.193045  avg_sigreg=2.265270  avg_raw_z_norm=5.248
+epoch 31/350  avg_loss=0.421688  avg_inv_loss=3.163364  avg_sigreg=2.239775  avg_raw_z_norm=5.248
+epoch 32/350  avg_loss=0.418991  avg_inv_loss=3.118406  avg_sigreg=2.240903  avg_raw_z_norm=5.255
+epoch 33/350  avg_loss=0.412004  avg_inv_loss=3.058886  avg_sigreg=2.208239  avg_raw_z_norm=5.254
+epoch 34/350  avg_loss=0.409257  avg_inv_loss=3.023963  avg_sigreg=2.202592  avg_raw_z_norm=5.266
+epoch 35/350  avg_loss=0.405430  avg_inv_loss=2.967266  avg_sigreg=2.199754  avg_raw_z_norm=5.268
+epoch 36/350  avg_loss=0.403740  avg_inv_loss=2.952035  avg_sigreg=2.192379  avg_raw_z_norm=5.272
+epoch 37/350  avg_loss=0.397644  avg_inv_loss=2.889622  avg_sigreg=2.170421  avg_raw_z_norm=5.272
+epoch 38/350  avg_loss=0.396493  avg_inv_loss=2.870148  avg_sigreg=2.171084  avg_raw_z_norm=5.277
+epoch 39/350  avg_loss=0.397304  avg_inv_loss=2.874411  avg_sigreg=2.176534  avg_raw_z_norm=5.281
+epoch 40/350  avg_loss=0.392248  avg_inv_loss=2.833144  avg_sigreg=2.151768  avg_raw_z_norm=5.280
+epoch 41/350  avg_loss=0.390425  avg_inv_loss=2.781995  avg_sigreg=2.165500  avg_raw_z_norm=5.283
+epoch 42/350  avg_loss=0.385672  avg_inv_loss=2.765001  avg_sigreg=2.128592  avg_raw_z_norm=5.290
+epoch 43/350  avg_loss=0.383259  avg_inv_loss=2.732920  avg_sigreg=2.124517  avg_raw_z_norm=5.290
+epoch 44/350  avg_loss=0.381413  avg_inv_loss=2.704508  avg_sigreg=2.123814  avg_raw_z_norm=5.292
+epoch 45/350  avg_loss=0.379313  avg_inv_loss=2.680231  avg_sigreg=2.117983  avg_raw_z_norm=5.294
+epoch 46/350  avg_loss=0.377307  avg_inv_loss=2.659022  avg_sigreg=2.111185  avg_raw_z_norm=5.301
+epoch 47/350  avg_loss=0.373439  avg_inv_loss=2.627209  avg_sigreg=2.092385  avg_raw_z_norm=5.297
+epoch 48/350  avg_loss=0.370183  avg_inv_loss=2.596430  avg_sigreg=2.079063  avg_raw_z_norm=5.299
+epoch 49/350  avg_loss=0.371287  avg_inv_loss=2.611440  avg_sigreg=2.080717  avg_raw_z_norm=5.305
+epoch 50/350  avg_loss=0.366608  avg_inv_loss=2.556209  avg_sigreg=2.068455  avg_raw_z_norm=5.302
+epoch 51/350  avg_loss=0.363828  avg_inv_loss=2.532812  avg_sigreg=2.055269  avg_raw_z_norm=5.315
+epoch 52/350  avg_loss=0.362826  avg_inv_loss=2.509806  avg_sigreg=2.059632  avg_raw_z_norm=5.310
+epoch 53/350  avg_loss=0.361333  avg_inv_loss=2.508282  avg_sigreg=2.045657  avg_raw_z_norm=5.314
+epoch 54/350  avg_loss=0.357952  avg_inv_loss=2.464799  avg_sigreg=2.039018  avg_raw_z_norm=5.316
+epoch 55/350  avg_loss=0.357175  avg_inv_loss=2.456933  avg_sigreg=2.036168  avg_raw_z_norm=5.316
+epoch 56/350  avg_loss=0.356125  avg_inv_loss=2.429447  avg_sigreg=2.042847  avg_raw_z_norm=5.321
+epoch 57/350  avg_loss=0.352786  avg_inv_loss=2.426254  avg_sigreg=2.011453  avg_raw_z_norm=5.322
+epoch 58/350  avg_loss=0.352365  avg_inv_loss=2.411215  avg_sigreg=2.016638  avg_raw_z_norm=5.321
+epoch 59/350  avg_loss=0.351510  avg_inv_loss=2.400905  avg_sigreg=2.014536  avg_raw_z_norm=5.324
+epoch 60/350  avg_loss=0.347081  avg_inv_loss=2.362713  avg_sigreg=1.994113  avg_raw_z_norm=5.322
+epoch 61/350  avg_loss=0.347480  avg_inv_loss=2.360763  avg_sigreg=1.999323  avg_raw_z_norm=5.330
+epoch 62/350  avg_loss=0.345467  avg_inv_loss=2.318767  avg_sigreg=2.005441  avg_raw_z_norm=5.331
+epoch 63/350  avg_loss=0.343146  avg_inv_loss=2.299519  avg_sigreg=1.994258  avg_raw_z_norm=5.333
+epoch 64/350  avg_loss=0.341386  avg_inv_loss=2.289190  avg_sigreg=1.983121  avg_raw_z_norm=5.336
+epoch 65/350  avg_loss=0.339574  avg_inv_loss=2.277673  avg_sigreg=1.972196  avg_raw_z_norm=5.335
+epoch 66/350  avg_loss=0.337129  avg_inv_loss=2.256149  avg_sigreg=1.961194  avg_raw_z_norm=5.336
+epoch 67/350  avg_loss=0.336249  avg_inv_loss=2.243206  avg_sigreg=1.960491  avg_raw_z_norm=5.342
+epoch 68/350  avg_loss=0.335727  avg_inv_loss=2.236354  avg_sigreg=1.959545  avg_raw_z_norm=5.341
+epoch 69/350  avg_loss=0.333792  avg_inv_loss=2.207436  avg_sigreg=1.958277  avg_raw_z_norm=5.342
+epoch 70/350  avg_loss=0.335154  avg_inv_loss=2.216566  avg_sigreg=1.966189  avg_raw_z_norm=5.338
+epoch 71/350  avg_loss=0.333917  avg_inv_loss=2.215910  avg_sigreg=1.954228  avg_raw_z_norm=5.346
+epoch 72/350  avg_loss=0.329829  avg_inv_loss=2.195944  avg_sigreg=1.925829  avg_raw_z_norm=5.348
+epoch 73/350  avg_loss=0.327501  avg_inv_loss=2.157876  avg_sigreg=1.926337  avg_raw_z_norm=5.342
+epoch 74/350  avg_loss=0.328936  avg_inv_loss=2.164155  avg_sigreg=1.936760  avg_raw_z_norm=5.346
+epoch 75/350  avg_loss=0.326346  avg_inv_loss=2.143403  avg_sigreg=1.923829  avg_raw_z_norm=5.353
+epoch 76/350  avg_loss=0.326039  avg_inv_loss=2.132492  avg_sigreg=1.927580  avg_raw_z_norm=5.351
+epoch 77/350  avg_loss=0.323247  avg_inv_loss=2.115455  avg_sigreg=1.910315  avg_raw_z_norm=5.353
+epoch 78/350  avg_loss=0.320990  avg_inv_loss=2.110776  avg_sigreg=1.890663  avg_raw_z_norm=5.354
+epoch 79/350  avg_loss=0.322328  avg_inv_loss=2.108848  avg_sigreg=1.905247  avg_raw_z_norm=5.357
+epoch 80/350  avg_loss=0.319760  avg_inv_loss=2.083025  avg_sigreg=1.895708  avg_raw_z_norm=5.354
+epoch 81/350  avg_loss=0.317664  avg_inv_loss=2.062579  avg_sigreg=1.887527  avg_raw_z_norm=5.358
+epoch 82/350  avg_loss=0.317103  avg_inv_loss=2.055883  avg_sigreg=1.886106  avg_raw_z_norm=5.356
+epoch 83/350  avg_loss=0.316075  avg_inv_loss=2.053413  avg_sigreg=1.877365  avg_raw_z_norm=5.363
+epoch 84/350  avg_loss=0.317335  avg_inv_loss=2.051177  avg_sigreg=1.891367  avg_raw_z_norm=5.353
+epoch 85/350  avg_loss=0.312344  avg_inv_loss=2.029951  avg_sigreg=1.854718  avg_raw_z_norm=5.367
+epoch 86/350  avg_loss=0.313078  avg_inv_loss=2.021025  avg_sigreg=1.867637  avg_raw_z_norm=5.363
+epoch 87/350  avg_loss=0.311164  avg_inv_loss=2.007581  avg_sigreg=1.856904  avg_raw_z_norm=5.365
+epoch 88/350  avg_loss=0.310154  avg_inv_loss=2.006687  avg_sigreg=1.847357  avg_raw_z_norm=5.364
+epoch 89/350  avg_loss=0.310272  avg_inv_loss=2.012371  avg_sigreg=1.844992  avg_raw_z_norm=5.368
+epoch 90/350  avg_loss=0.308333  avg_inv_loss=1.990874  avg_sigreg=1.839037  avg_raw_z_norm=5.368
+epoch 91/350  avg_loss=0.307601  avg_inv_loss=1.977289  avg_sigreg=1.840203  avg_raw_z_norm=5.369
+epoch 92/350  avg_loss=0.306565  avg_inv_loss=1.976493  avg_sigreg=1.830340  avg_raw_z_norm=5.366
+epoch 93/350  avg_loss=0.303759  avg_inv_loss=1.961515  avg_sigreg=1.811639  avg_raw_z_norm=5.374
+epoch 94/350  avg_loss=0.305703  avg_inv_loss=1.974280  avg_sigreg=1.823103  avg_raw_z_norm=5.370
+epoch 95/350  avg_loss=0.305205  avg_inv_loss=1.959396  avg_sigreg=1.827429  avg_raw_z_norm=5.372
+epoch 96/350  avg_loss=0.303390  avg_inv_loss=1.957894  avg_sigreg=1.810213  avg_raw_z_norm=5.374
+epoch 97/350  avg_loss=0.300052  avg_inv_loss=1.927739  avg_sigreg=1.795686  avg_raw_z_norm=5.374
+epoch 98/350  avg_loss=0.300292  avg_inv_loss=1.927972  avg_sigreg=1.797935  avg_raw_z_norm=5.378
+epoch 99/350  avg_loss=0.299661  avg_inv_loss=1.933530  avg_sigreg=1.788149  avg_raw_z_norm=5.380
+epoch 100/350  avg_loss=0.298919  avg_inv_loss=1.916131  avg_sigreg=1.791603  avg_raw_z_norm=5.378
+epoch 101/350  avg_loss=0.296213  avg_inv_loss=1.896974  avg_sigreg=1.776518  avg_raw_z_norm=5.377
+epoch 102/350  avg_loss=0.296375  avg_inv_loss=1.896518  avg_sigreg=1.778430  avg_raw_z_norm=5.380
+epoch 103/350  avg_loss=0.295285  avg_inv_loss=1.888801  avg_sigreg=1.772351  avg_raw_z_norm=5.381
+epoch 104/350  avg_loss=0.293439  avg_inv_loss=1.868525  avg_sigreg=1.766566  avg_raw_z_norm=5.380
+epoch 105/350  avg_loss=0.292975  avg_inv_loss=1.875928  avg_sigreg=1.757293  avg_raw_z_norm=5.379
+epoch 106/350  avg_loss=0.292010  avg_inv_loss=1.862572  avg_sigreg=1.755991  avg_raw_z_norm=5.381
+epoch 107/350  avg_loss=0.291583  avg_inv_loss=1.855064  avg_sigreg=1.756415  avg_raw_z_norm=5.386
+epoch 108/350  avg_loss=0.290497  avg_inv_loss=1.871061  avg_sigreg=1.735560  avg_raw_z_norm=5.383
+epoch 109/350  avg_loss=0.290392  avg_inv_loss=1.843581  avg_sigreg=1.751681  avg_raw_z_norm=5.386
+epoch 110/350  avg_loss=0.289545  avg_inv_loss=1.849713  avg_sigreg=1.739376  avg_raw_z_norm=5.382
+epoch 111/350  avg_loss=0.287628  avg_inv_loss=1.836288  avg_sigreg=1.728603  avg_raw_z_norm=5.384
+epoch 112/350  avg_loss=0.287141  avg_inv_loss=1.835304  avg_sigreg=1.724342  avg_raw_z_norm=5.391
+epoch 113/350  avg_loss=0.285198  avg_inv_loss=1.804000  avg_sigreg=1.724475  avg_raw_z_norm=5.389
+epoch 114/350  avg_loss=0.285466  avg_inv_loss=1.814399  avg_sigreg=1.720662  avg_raw_z_norm=5.387
+epoch 115/350  avg_loss=0.285274  avg_inv_loss=1.815491  avg_sigreg=1.718053  avg_raw_z_norm=5.389
+epoch 116/350  avg_loss=0.282901  avg_inv_loss=1.800445  avg_sigreg=1.703730  avg_raw_z_norm=5.390
+epoch 117/350  avg_loss=0.284282  avg_inv_loss=1.801094  avg_sigreg=1.717135  avg_raw_z_norm=5.393
+epoch 118/350  avg_loss=0.280119  avg_inv_loss=1.781232  avg_sigreg=1.687920  avg_raw_z_norm=5.394
+epoch 119/350  avg_loss=0.281676  avg_inv_loss=1.785682  avg_sigreg=1.700713  avg_raw_z_norm=5.389
+epoch 120/350  avg_loss=0.282336  avg_inv_loss=1.788924  avg_sigreg=1.705280  avg_raw_z_norm=5.392
+epoch 121/350  avg_loss=0.278848  avg_inv_loss=1.762160  avg_sigreg=1.687130  avg_raw_z_norm=5.394
+epoch 122/350  avg_loss=0.278135  avg_inv_loss=1.750508  avg_sigreg=1.687284  avg_raw_z_norm=5.394
+epoch 123/350  avg_loss=0.276911  avg_inv_loss=1.747330  avg_sigreg=1.677026  avg_raw_z_norm=5.396
+epoch 124/350  avg_loss=0.278236  avg_inv_loss=1.738716  avg_sigreg=1.695659  avg_raw_z_norm=5.392
+epoch 125/350  avg_loss=0.276399  avg_inv_loss=1.746148  avg_sigreg=1.672643  avg_raw_z_norm=5.396
+epoch 126/350  avg_loss=0.275222  avg_inv_loss=1.730249  avg_sigreg=1.670817  avg_raw_z_norm=5.400
+epoch 127/350  avg_loss=0.275395  avg_inv_loss=1.738807  avg_sigreg=1.667195  avg_raw_z_norm=5.400
+epoch 128/350  avg_loss=0.275198  avg_inv_loss=1.730511  avg_sigreg=1.670410  avg_raw_z_norm=5.396
+epoch 129/350  avg_loss=0.273155  avg_inv_loss=1.700066  avg_sigreg=1.669010  avg_raw_z_norm=5.399
+epoch 130/350  avg_loss=0.273276  avg_inv_loss=1.704768  avg_sigreg=1.667283  avg_raw_z_norm=5.401
+epoch 131/350  avg_loss=0.273336  avg_inv_loss=1.699916  avg_sigreg=1.670911  avg_raw_z_norm=5.399
+epoch 132/350  avg_loss=0.271042  avg_inv_loss=1.687843  avg_sigreg=1.655514  avg_raw_z_norm=5.401
+epoch 133/350  avg_loss=0.272636  avg_inv_loss=1.693100  avg_sigreg=1.668173  avg_raw_z_norm=5.405
+epoch 134/350  avg_loss=0.270864  avg_inv_loss=1.683038  avg_sigreg=1.656745  avg_raw_z_norm=5.400
+epoch 135/350  avg_loss=0.271460  avg_inv_loss=1.681187  avg_sigreg=1.663856  avg_raw_z_norm=5.403
+epoch 136/350  avg_loss=0.269390  avg_inv_loss=1.682864  avg_sigreg=1.642112  avg_raw_z_norm=5.401
+epoch 137/350  avg_loss=0.270595  avg_inv_loss=1.688277  avg_sigreg=1.650777  avg_raw_z_norm=5.398
+epoch 138/350  avg_loss=0.266449  avg_inv_loss=1.651437  avg_sigreg=1.632341  avg_raw_z_norm=5.401
+epoch 139/350  avg_loss=0.268204  avg_inv_loss=1.663734  avg_sigreg=1.642204  avg_raw_z_norm=5.408
+epoch 140/350  avg_loss=0.267424  avg_inv_loss=1.668307  avg_sigreg=1.631550  avg_raw_z_norm=5.405
+epoch 141/350  avg_loss=0.265816  avg_inv_loss=1.640183  avg_sigreg=1.633045  avg_raw_z_norm=5.403
+epoch 142/350  avg_loss=0.264789  avg_inv_loss=1.636901  avg_sigreg=1.624831  avg_raw_z_norm=5.408
+epoch 143/350  avg_loss=0.265004  avg_inv_loss=1.623142  avg_sigreg=1.635581  avg_raw_z_norm=5.408
+epoch 144/350  avg_loss=0.264783  avg_inv_loss=1.640661  avg_sigreg=1.622416  avg_raw_z_norm=5.409
+epoch 145/350  avg_loss=0.263447  avg_inv_loss=1.614248  avg_sigreg=1.625562  avg_raw_z_norm=5.410
+epoch 146/350  avg_loss=0.263305  avg_inv_loss=1.603565  avg_sigreg=1.630820  avg_raw_z_norm=5.407
+epoch 147/350  avg_loss=0.263343  avg_inv_loss=1.622030  avg_sigreg=1.619664  avg_raw_z_norm=5.411
+epoch 148/350  avg_loss=0.263739  avg_inv_loss=1.619495  avg_sigreg=1.625205  avg_raw_z_norm=5.408
+epoch 149/350  avg_loss=0.263623  avg_inv_loss=1.625898  avg_sigreg=1.620041  avg_raw_z_norm=5.410
+epoch 150/350  avg_loss=0.260795  avg_inv_loss=1.596605  avg_sigreg=1.610076  avg_raw_z_norm=5.410
+epoch 151/350  avg_loss=0.260013  avg_inv_loss=1.579323  avg_sigreg=1.613052  avg_raw_z_norm=5.408
+epoch 152/350  avg_loss=0.259707  avg_inv_loss=1.593971  avg_sigreg=1.600838  avg_raw_z_norm=5.411
+epoch 153/350  avg_loss=0.260931  avg_inv_loss=1.586522  avg_sigreg=1.617731  avg_raw_z_norm=5.412
+epoch 154/350  avg_loss=0.258387  avg_inv_loss=1.584134  avg_sigreg=1.593784  avg_raw_z_norm=5.414
+epoch 155/350  avg_loss=0.262242  avg_inv_loss=1.596999  avg_sigreg=1.624293  avg_raw_z_norm=5.408
+epoch 156/350  avg_loss=0.258733  avg_inv_loss=1.573077  avg_sigreg=1.604159  avg_raw_z_norm=5.414
+epoch 157/350  avg_loss=0.258361  avg_inv_loss=1.578608  avg_sigreg=1.596984  avg_raw_z_norm=5.418
+epoch 158/350  avg_loss=0.257554  avg_inv_loss=1.563598  avg_sigreg=1.598290  avg_raw_z_norm=5.408
+epoch 159/350  avg_loss=0.257646  avg_inv_loss=1.583469  avg_sigreg=1.586793  avg_raw_z_norm=5.413
+epoch 160/350  avg_loss=0.256387  avg_inv_loss=1.556716  avg_sigreg=1.590922  avg_raw_z_norm=5.415
+epoch 161/350  avg_loss=0.254208  avg_inv_loss=1.542752  avg_sigreg=1.577857  avg_raw_z_norm=5.415
+epoch 162/350  avg_loss=0.256224  avg_inv_loss=1.554625  avg_sigreg=1.590601  avg_raw_z_norm=5.414
+epoch 163/350  avg_loss=0.252846  avg_inv_loss=1.521547  avg_sigreg=1.577494  avg_raw_z_norm=5.413
+epoch 164/350  avg_loss=0.254910  avg_inv_loss=1.545453  avg_sigreg=1.583196  avg_raw_z_norm=5.420
+epoch 165/350  avg_loss=0.253183  avg_inv_loss=1.535289  avg_sigreg=1.572274  avg_raw_z_norm=5.420
+epoch 166/350  avg_loss=0.251852  avg_inv_loss=1.523314  avg_sigreg=1.566447  avg_raw_z_norm=5.418
+epoch 167/350  avg_loss=0.251209  avg_inv_loss=1.520525  avg_sigreg=1.561766  avg_raw_z_norm=5.420
+epoch 168/350  avg_loss=0.250779  avg_inv_loss=1.514624  avg_sigreg=1.561149  avg_raw_z_norm=5.420
+epoch 169/350  avg_loss=0.249746  avg_inv_loss=1.518638  avg_sigreg=1.548314  avg_raw_z_norm=5.421
+epoch 170/350  avg_loss=0.251333  avg_inv_loss=1.524734  avg_sigreg=1.560376  avg_raw_z_norm=5.418
+epoch 171/350  avg_loss=0.249496  avg_inv_loss=1.518208  avg_sigreg=1.546081  avg_raw_z_norm=5.420
+epoch 172/350  avg_loss=0.250442  avg_inv_loss=1.518023  avg_sigreg=1.555654  avg_raw_z_norm=5.420
+epoch 173/350  avg_loss=0.247919  avg_inv_loss=1.491540  avg_sigreg=1.546978  avg_raw_z_norm=5.423
+epoch 174/350  avg_loss=0.248106  avg_inv_loss=1.500038  avg_sigreg=1.543538  avg_raw_z_norm=5.422
+epoch 175/350  avg_loss=0.246700  avg_inv_loss=1.491547  avg_sigreg=1.534780  avg_raw_z_norm=5.422
+epoch 176/350  avg_loss=0.248234  avg_inv_loss=1.494959  avg_sigreg=1.547992  avg_raw_z_norm=5.421
+epoch 177/350  avg_loss=0.246482  avg_inv_loss=1.494847  avg_sigreg=1.530536  avg_raw_z_norm=5.424
+epoch 178/350  avg_loss=0.247532  avg_inv_loss=1.480653  avg_sigreg=1.549915  avg_raw_z_norm=5.422
+epoch 179/350  avg_loss=0.248422  avg_inv_loss=1.512896  avg_sigreg=1.538664  avg_raw_z_norm=5.422
+epoch 180/350  avg_loss=0.247409  avg_inv_loss=1.505706  avg_sigreg=1.533026  avg_raw_z_norm=5.422
+epoch 181/350  avg_loss=0.244176  avg_inv_loss=1.464014  avg_sigreg=1.526754  avg_raw_z_norm=5.424
+epoch 182/350  avg_loss=0.244615  avg_inv_loss=1.481232  avg_sigreg=1.520382  avg_raw_z_norm=5.425
+epoch 183/350  avg_loss=0.244341  avg_inv_loss=1.465800  avg_sigreg=1.527290  avg_raw_z_norm=5.424
+epoch 184/350  avg_loss=0.243682  avg_inv_loss=1.451037  avg_sigreg=1.529927  avg_raw_z_norm=5.425
+epoch 185/350  avg_loss=0.243933  avg_inv_loss=1.459652  avg_sigreg=1.527049  avg_raw_z_norm=5.426
+epoch 186/350  avg_loss=0.242634  avg_inv_loss=1.455034  avg_sigreg=1.516944  avg_raw_z_norm=5.426
+epoch 187/350  avg_loss=0.242687  avg_inv_loss=1.463198  avg_sigreg=1.512371  avg_raw_z_norm=5.427
+epoch 188/350  avg_loss=0.242212  avg_inv_loss=1.433434  avg_sigreg=1.526223  avg_raw_z_norm=5.429
+epoch 189/350  avg_loss=0.241854  avg_inv_loss=1.437121  avg_sigreg=1.520338  avg_raw_z_norm=5.429
+epoch 190/350  avg_loss=0.241946  avg_inv_loss=1.441369  avg_sigreg=1.518602  avg_raw_z_norm=5.430
+epoch 191/350  avg_loss=0.240630  avg_inv_loss=1.439933  avg_sigreg=1.506346  avg_raw_z_norm=5.426
+epoch 192/350  avg_loss=0.240242  avg_inv_loss=1.446874  avg_sigreg=1.498120  avg_raw_z_norm=5.426
+epoch 193/350  avg_loss=0.239986  avg_inv_loss=1.429711  avg_sigreg=1.506295  avg_raw_z_norm=5.432
+epoch 194/350  avg_loss=0.237710  avg_inv_loss=1.412761  avg_sigreg=1.494124  avg_raw_z_norm=5.429
+epoch 195/350  avg_loss=0.238978  avg_inv_loss=1.423082  avg_sigreg=1.500358  avg_raw_z_norm=5.427
+epoch 196/350  avg_loss=0.240466  avg_inv_loss=1.446371  avg_sigreg=1.500682  avg_raw_z_norm=5.429
+epoch 197/350  avg_loss=0.238495  avg_inv_loss=1.413924  avg_sigreg=1.501247  avg_raw_z_norm=5.430
+epoch 198/350  avg_loss=0.238272  avg_inv_loss=1.413307  avg_sigreg=1.499402  avg_raw_z_norm=5.431
+epoch 199/350  avg_loss=0.237960  avg_inv_loss=1.408308  avg_sigreg=1.499406  avg_raw_z_norm=5.432
+epoch 200/350  avg_loss=0.237801  avg_inv_loss=1.412231  avg_sigreg=1.495363  avg_raw_z_norm=5.431
+epoch 201/350  avg_loss=0.237709  avg_inv_loss=1.393188  avg_sigreg=1.506353  avg_raw_z_norm=5.430
+epoch 202/350  avg_loss=0.234371  avg_inv_loss=1.381316  avg_sigreg=1.480383  avg_raw_z_norm=5.427
+epoch 203/350  avg_loss=0.233777  avg_inv_loss=1.369466  avg_sigreg=1.481849  avg_raw_z_norm=5.437
+epoch 204/350  avg_loss=0.233508  avg_inv_loss=1.380241  avg_sigreg=1.472434  avg_raw_z_norm=5.434
+epoch 205/350  avg_loss=0.234781  avg_inv_loss=1.391830  avg_sigreg=1.477916  avg_raw_z_norm=5.436
+epoch 206/350  avg_loss=0.233553  avg_inv_loss=1.380535  avg_sigreg=1.472695  avg_raw_z_norm=5.432
+epoch 207/350  avg_loss=0.231993  avg_inv_loss=1.377018  avg_sigreg=1.459298  avg_raw_z_norm=5.432
+epoch 208/350  avg_loss=0.234375  avg_inv_loss=1.389711  avg_sigreg=1.475183  avg_raw_z_norm=5.436
+epoch 209/350  avg_loss=0.233073  avg_inv_loss=1.370085  avg_sigreg=1.474423  avg_raw_z_norm=5.434
+epoch 210/350  avg_loss=0.233533  avg_inv_loss=1.390661  avg_sigreg=1.466163  avg_raw_z_norm=5.433
+epoch 211/350  avg_loss=0.232186  avg_inv_loss=1.374764  avg_sigreg=1.462634  avg_raw_z_norm=5.437
+epoch 212/350  avg_loss=0.230666  avg_inv_loss=1.356432  avg_sigreg=1.458889  avg_raw_z_norm=5.433
+epoch 213/350  avg_loss=0.231795  avg_inv_loss=1.355577  avg_sigreg=1.470716  avg_raw_z_norm=5.439
+epoch 214/350  avg_loss=0.230025  avg_inv_loss=1.353603  avg_sigreg=1.454245  avg_raw_z_norm=5.431
+epoch 215/350  avg_loss=0.230757  avg_inv_loss=1.363201  avg_sigreg=1.455570  avg_raw_z_norm=5.438
+epoch 216/350  avg_loss=0.230940  avg_inv_loss=1.374464  avg_sigreg=1.450358  avg_raw_z_norm=5.437
+epoch 217/350  avg_loss=0.230235  avg_inv_loss=1.343250  avg_sigreg=1.462823  avg_raw_z_norm=5.434
+epoch 218/350  avg_loss=0.228439  avg_inv_loss=1.344423  avg_sigreg=1.444127  avg_raw_z_norm=5.440
+epoch 219/350  avg_loss=0.229392  avg_inv_loss=1.345087  avg_sigreg=1.453243  avg_raw_z_norm=5.436
+epoch 220/350  avg_loss=0.228554  avg_inv_loss=1.343298  avg_sigreg=1.445977  avg_raw_z_norm=5.437
+epoch 221/350  avg_loss=0.227252  avg_inv_loss=1.326905  avg_sigreg=1.443205  avg_raw_z_norm=5.444
+epoch 222/350  avg_loss=0.228459  avg_inv_loss=1.321383  avg_sigreg=1.458727  avg_raw_z_norm=5.439
+epoch 223/350  avg_loss=0.227989  avg_inv_loss=1.338294  avg_sigreg=1.443455  avg_raw_z_norm=5.441
+epoch 224/350  avg_loss=0.226257  avg_inv_loss=1.321800  avg_sigreg=1.436449  avg_raw_z_norm=5.445
+epoch 225/350  avg_loss=0.226881  avg_inv_loss=1.322886  avg_sigreg=1.442002  avg_raw_z_norm=5.441
+epoch 226/350  avg_loss=0.225722  avg_inv_loss=1.314704  avg_sigreg=1.435533  avg_raw_z_norm=5.442
+epoch 227/350  avg_loss=0.228237  avg_inv_loss=1.333492  avg_sigreg=1.448940  avg_raw_z_norm=5.440
+epoch 228/350  avg_loss=0.226522  avg_inv_loss=1.319717  avg_sigreg=1.440392  avg_raw_z_norm=5.444
+epoch 229/350  avg_loss=0.225449  avg_inv_loss=1.303947  avg_sigreg=1.439522  avg_raw_z_norm=5.440
+epoch 230/350  avg_loss=0.224432  avg_inv_loss=1.295420  avg_sigreg=1.434681  avg_raw_z_norm=5.441
+epoch 231/350  avg_loss=0.223679  avg_inv_loss=1.292970  avg_sigreg=1.428683  avg_raw_z_norm=5.442
+epoch 232/350  avg_loss=0.224631  avg_inv_loss=1.300207  avg_sigreg=1.433678  avg_raw_z_norm=5.440
+epoch 233/350  avg_loss=0.223158  avg_inv_loss=1.300498  avg_sigreg=1.418764  avg_raw_z_norm=5.442
+epoch 234/350  avg_loss=0.223358  avg_inv_loss=1.293073  avg_sigreg=1.425408  avg_raw_z_norm=5.445
+epoch 235/350  avg_loss=0.223309  avg_inv_loss=1.297651  avg_sigreg=1.422062  avg_raw_z_norm=5.441
+epoch 236/350  avg_loss=0.224761  avg_inv_loss=1.318627  avg_sigreg=1.423472  avg_raw_z_norm=5.443
+epoch 237/350  avg_loss=0.221704  avg_inv_loss=1.282940  avg_sigreg=1.415201  avg_raw_z_norm=5.445
+epoch 238/350  avg_loss=0.222900  avg_inv_loss=1.279127  avg_sigreg=1.429550  avg_raw_z_norm=5.443
+epoch 239/350  avg_loss=0.220918  avg_inv_loss=1.278614  avg_sigreg=1.410051  avg_raw_z_norm=5.445
+epoch 240/350  avg_loss=0.221887  avg_inv_loss=1.281769  avg_sigreg=1.417767  avg_raw_z_norm=5.441
+epoch 241/350  avg_loss=0.221798  avg_inv_loss=1.283534  avg_sigreg=1.415776  avg_raw_z_norm=5.447
+epoch 242/350  avg_loss=0.219448  avg_inv_loss=1.254229  avg_sigreg=1.410582  avg_raw_z_norm=5.444
+epoch 243/350  avg_loss=0.220109  avg_inv_loss=1.261839  avg_sigreg=1.412436  avg_raw_z_norm=5.444
+epoch 244/350  avg_loss=0.219239  avg_inv_loss=1.265575  avg_sigreg=1.401406  avg_raw_z_norm=5.443
+epoch 245/350  avg_loss=0.220569  avg_inv_loss=1.260564  avg_sigreg=1.417841  avg_raw_z_norm=5.445
+epoch 246/350  avg_loss=0.219236  avg_inv_loss=1.247856  avg_sigreg=1.412455  avg_raw_z_norm=5.447
+epoch 247/350  avg_loss=0.218140  avg_inv_loss=1.242302  avg_sigreg=1.404964  avg_raw_z_norm=5.443
+epoch 248/350  avg_loss=0.217789  avg_inv_loss=1.245974  avg_sigreg=1.399160  avg_raw_z_norm=5.447
+epoch 249/350  avg_loss=0.219774  avg_inv_loss=1.258619  avg_sigreg=1.411101  avg_raw_z_norm=5.446
+epoch 250/350  avg_loss=0.221076  avg_inv_loss=1.267966  avg_sigreg=1.418278  avg_raw_z_norm=5.446
+epoch 251/350  avg_loss=0.219432  avg_inv_loss=1.253653  avg_sigreg=1.410791  avg_raw_z_norm=5.450
+epoch 252/350  avg_loss=0.217116  avg_inv_loss=1.244442  avg_sigreg=1.393381  avg_raw_z_norm=5.447
+epoch 253/350  avg_loss=0.217589  avg_inv_loss=1.246653  avg_sigreg=1.396728  avg_raw_z_norm=5.448
+epoch 254/350  avg_loss=0.216571  avg_inv_loss=1.235717  avg_sigreg=1.393383  avg_raw_z_norm=5.447
+epoch 255/350  avg_loss=0.217218  avg_inv_loss=1.237755  avg_sigreg=1.398582  avg_raw_z_norm=5.448
+epoch 256/350  avg_loss=0.216325  avg_inv_loss=1.227786  avg_sigreg=1.395886  avg_raw_z_norm=5.449
+epoch 257/350  avg_loss=0.215055  avg_inv_loss=1.215783  avg_sigreg=1.390681  avg_raw_z_norm=5.451
+epoch 258/350  avg_loss=0.215920  avg_inv_loss=1.236888  avg_sigreg=1.386141  avg_raw_z_norm=5.449
+epoch 259/350  avg_loss=0.214672  avg_inv_loss=1.216765  avg_sigreg=1.386237  avg_raw_z_norm=5.450
+epoch 260/350  avg_loss=0.213374  avg_inv_loss=1.198719  avg_sigreg=1.384539  avg_raw_z_norm=5.447
+epoch 261/350  avg_loss=0.215143  avg_inv_loss=1.227159  avg_sigreg=1.384459  avg_raw_z_norm=5.452
+epoch 262/350  avg_loss=0.215172  avg_inv_loss=1.213968  avg_sigreg=1.392993  avg_raw_z_norm=5.453
+epoch 263/350  avg_loss=0.212793  avg_inv_loss=1.191569  avg_sigreg=1.383196  avg_raw_z_norm=5.448
+epoch 264/350  avg_loss=0.214350  avg_inv_loss=1.210357  avg_sigreg=1.387031  avg_raw_z_norm=5.451
+epoch 265/350  avg_loss=0.213697  avg_inv_loss=1.204863  avg_sigreg=1.383931  avg_raw_z_norm=5.450
+epoch 266/350  avg_loss=0.213343  avg_inv_loss=1.199868  avg_sigreg=1.383512  avg_raw_z_norm=5.454
+epoch 267/350  avg_loss=0.213395  avg_inv_loss=1.203259  avg_sigreg=1.381914  avg_raw_z_norm=5.454
+epoch 268/350  avg_loss=0.214397  avg_inv_loss=1.201471  avg_sigreg=1.393051  avg_raw_z_norm=5.450
+epoch 269/350  avg_loss=0.213495  avg_inv_loss=1.207850  avg_sigreg=1.380044  avg_raw_z_norm=5.453
+epoch 270/350  avg_loss=0.213949  avg_inv_loss=1.202432  avg_sigreg=1.387970  avg_raw_z_norm=5.455
+epoch 271/350  avg_loss=0.210820  avg_inv_loss=1.185310  avg_sigreg=1.367380  avg_raw_z_norm=5.453
+epoch 272/350  avg_loss=0.212806  avg_inv_loss=1.189135  avg_sigreg=1.384850  avg_raw_z_norm=5.456
+epoch 273/350  avg_loss=0.212340  avg_inv_loss=1.186199  avg_sigreg=1.382022  avg_raw_z_norm=5.453
+epoch 274/350  avg_loss=0.211807  avg_inv_loss=1.198612  avg_sigreg=1.368934  avg_raw_z_norm=5.456
+epoch 275/350  avg_loss=0.212163  avg_inv_loss=1.177812  avg_sigreg=1.385499  avg_raw_z_norm=5.453
+epoch 276/350  avg_loss=0.210439  avg_inv_loss=1.171261  avg_sigreg=1.372356  avg_raw_z_norm=5.454
+epoch 277/350  avg_loss=0.210048  avg_inv_loss=1.173792  avg_sigreg=1.366857  avg_raw_z_norm=5.457
+epoch 278/350  avg_loss=0.211065  avg_inv_loss=1.179283  avg_sigreg=1.373596  avg_raw_z_norm=5.452
+epoch 279/350  avg_loss=0.209583  avg_inv_loss=1.174251  avg_sigreg=1.361921  avg_raw_z_norm=5.455
+epoch 280/350  avg_loss=0.209916  avg_inv_loss=1.172365  avg_sigreg=1.366429  avg_raw_z_norm=5.461
+epoch 281/350  avg_loss=0.210055  avg_inv_loss=1.175534  avg_sigreg=1.365838  avg_raw_z_norm=5.453
+epoch 282/350  avg_loss=0.210229  avg_inv_loss=1.166953  avg_sigreg=1.372942  avg_raw_z_norm=5.455
+epoch 283/350  avg_loss=0.208383  avg_inv_loss=1.162447  avg_sigreg=1.357301  avg_raw_z_norm=5.458
+epoch 284/350  avg_loss=0.207469  avg_inv_loss=1.164679  avg_sigreg=1.346764  avg_raw_z_norm=5.455
+epoch 285/350  avg_loss=0.207970  avg_inv_loss=1.159545  avg_sigreg=1.354987  avg_raw_z_norm=5.455
+epoch 286/350  avg_loss=0.207598  avg_inv_loss=1.167250  avg_sigreg=1.346449  avg_raw_z_norm=5.457
+epoch 287/350  avg_loss=0.206282  avg_inv_loss=1.157023  avg_sigreg=1.339675  avg_raw_z_norm=5.456
+epoch 288/350  avg_loss=0.209727  avg_inv_loss=1.173784  avg_sigreg=1.363650  avg_raw_z_norm=5.458
+epoch 289/350  avg_loss=0.206430  avg_inv_loss=1.148809  avg_sigreg=1.346298  avg_raw_z_norm=5.456
+epoch 290/350  avg_loss=0.205551  avg_inv_loss=1.141795  avg_sigreg=1.341891  avg_raw_z_norm=5.458
+epoch 291/350  avg_loss=0.206215  avg_inv_loss=1.146589  avg_sigreg=1.345527  avg_raw_z_norm=5.458
+epoch 292/350  avg_loss=0.204892  avg_inv_loss=1.137624  avg_sigreg=1.337904  avg_raw_z_norm=5.457
+epoch 293/350  avg_loss=0.205104  avg_inv_loss=1.135358  avg_sigreg=1.341437  avg_raw_z_norm=5.459
+epoch 294/350  avg_loss=0.204021  avg_inv_loss=1.128893  avg_sigreg=1.334652  avg_raw_z_norm=5.457
+epoch 295/350  avg_loss=0.205691  avg_inv_loss=1.127447  avg_sigreg=1.352256  avg_raw_z_norm=5.455
+epoch 296/350  avg_loss=0.205012  avg_inv_loss=1.130819  avg_sigreg=1.343357  avg_raw_z_norm=5.461
+epoch 297/350  avg_loss=0.205726  avg_inv_loss=1.133245  avg_sigreg=1.348984  avg_raw_z_norm=5.459
+epoch 298/350  avg_loss=0.205281  avg_inv_loss=1.138547  avg_sigreg=1.341220  avg_raw_z_norm=5.458
+epoch 299/350  avg_loss=0.203342  avg_inv_loss=1.118061  avg_sigreg=1.334636  avg_raw_z_norm=5.460
+epoch 300/350  avg_loss=0.204277  avg_inv_loss=1.107192  avg_sigreg=1.350773  avg_raw_z_norm=5.461
+epoch 301/350  avg_loss=0.202914  avg_inv_loss=1.116249  avg_sigreg=1.331487  avg_raw_z_norm=5.461
+epoch 302/350  avg_loss=0.204015  avg_inv_loss=1.122143  avg_sigreg=1.338809  avg_raw_z_norm=5.461
+epoch 303/350  avg_loss=0.204283  avg_inv_loss=1.125046  avg_sigreg=1.339681  avg_raw_z_norm=5.460
+epoch 304/350  avg_loss=0.203250  avg_inv_loss=1.117056  avg_sigreg=1.334344  avg_raw_z_norm=5.461
+epoch 305/350  avg_loss=0.202476  avg_inv_loss=1.117962  avg_sigreg=1.326031  avg_raw_z_norm=5.461
+epoch 306/350  avg_loss=0.202830  avg_inv_loss=1.104411  avg_sigreg=1.338046  avg_raw_z_norm=5.461
+epoch 307/350  avg_loss=0.203873  avg_inv_loss=1.123827  avg_sigreg=1.336336  avg_raw_z_norm=5.459
+epoch 308/350  avg_loss=0.203421  avg_inv_loss=1.103349  avg_sigreg=1.344612  avg_raw_z_norm=5.460
+epoch 309/350  avg_loss=0.203459  avg_inv_loss=1.106461  avg_sigreg=1.343050  avg_raw_z_norm=5.461
+epoch 310/350  avg_loss=0.203074  avg_inv_loss=1.101062  avg_sigreg=1.342576  avg_raw_z_norm=5.459
+epoch 311/350  avg_loss=0.200686  avg_inv_loss=1.089997  avg_sigreg=1.325612  avg_raw_z_norm=5.461
+epoch 312/350  avg_loss=0.201740  avg_inv_loss=1.093964  avg_sigreg=1.333670  avg_raw_z_norm=5.465
+epoch 313/350  avg_loss=0.203355  avg_inv_loss=1.099608  avg_sigreg=1.346291  avg_raw_z_norm=5.461
+epoch 314/350  avg_loss=0.201801  avg_inv_loss=1.095314  avg_sigreg=1.333440  avg_raw_z_norm=5.461
+epoch 315/350  avg_loss=0.200889  avg_inv_loss=1.085498  avg_sigreg=1.330456  avg_raw_z_norm=5.462
+epoch 316/350  avg_loss=0.200744  avg_inv_loss=1.090111  avg_sigreg=1.326117  avg_raw_z_norm=5.462
+epoch 317/350  avg_loss=0.200161  avg_inv_loss=1.095960  avg_sigreg=1.316636  avg_raw_z_norm=5.463
+epoch 318/350  avg_loss=0.201350  avg_inv_loss=1.087454  avg_sigreg=1.333844  avg_raw_z_norm=5.464
+epoch 319/350  avg_loss=0.200702  avg_inv_loss=1.092072  avg_sigreg=1.324480  avg_raw_z_norm=5.462
+epoch 320/350  avg_loss=0.199561  avg_inv_loss=1.085269  avg_sigreg=1.317315  avg_raw_z_norm=5.463
+epoch 321/350  avg_loss=0.200413  avg_inv_loss=1.074626  avg_sigreg=1.332488  avg_raw_z_norm=5.462
+epoch 322/350  avg_loss=0.198072  avg_inv_loss=1.063093  avg_sigreg=1.316292  avg_raw_z_norm=5.469
+epoch 323/350  avg_loss=0.198572  avg_inv_loss=1.057685  avg_sigreg=1.324665  avg_raw_z_norm=5.461
+epoch 324/350  avg_loss=0.199265  avg_inv_loss=1.060492  avg_sigreg=1.329841  avg_raw_z_norm=5.464
+epoch 325/350  avg_loss=0.198217  avg_inv_loss=1.057749  avg_sigreg=1.321077  avg_raw_z_norm=5.464
+epoch 326/350  avg_loss=0.199241  avg_inv_loss=1.071421  avg_sigreg=1.322776  avg_raw_z_norm=5.463
+epoch 327/350  avg_loss=0.198747  avg_inv_loss=1.063785  avg_sigreg=1.322605  avg_raw_z_norm=5.463
+epoch 328/350  avg_loss=0.198465  avg_inv_loss=1.057504  avg_sigreg=1.323708  avg_raw_z_norm=5.465
+epoch 329/350  avg_loss=0.196988  avg_inv_loss=1.057684  avg_sigreg=1.308831  avg_raw_z_norm=5.467
+epoch 330/350  avg_loss=0.197517  avg_inv_loss=1.059869  avg_sigreg=1.312748  avg_raw_z_norm=5.463
+epoch 331/350  avg_loss=0.198503  avg_inv_loss=1.048164  avg_sigreg=1.329927  avg_raw_z_norm=5.468
+epoch 332/350  avg_loss=0.198767  avg_inv_loss=1.047215  avg_sigreg=1.333157  avg_raw_z_norm=5.464
+epoch 333/350  avg_loss=0.197620  avg_inv_loss=1.056125  avg_sigreg=1.316125  avg_raw_z_norm=5.463
+epoch 334/350  avg_loss=0.196113  avg_inv_loss=1.036121  avg_sigreg=1.313557  avg_raw_z_norm=5.467
+epoch 335/350  avg_loss=0.197130  avg_inv_loss=1.046492  avg_sigreg=1.317246  avg_raw_z_norm=5.469
+epoch 336/350  avg_loss=0.195442  avg_inv_loss=1.040895  avg_sigreg=1.303864  avg_raw_z_norm=5.465
+epoch 337/350  avg_loss=0.197424  avg_inv_loss=1.038040  avg_sigreg=1.325465  avg_raw_z_norm=5.464
+epoch 338/350  avg_loss=0.198375  avg_inv_loss=1.041414  avg_sigreg=1.332867  avg_raw_z_norm=5.469
+epoch 339/350  avg_loss=0.197657  avg_inv_loss=1.043838  avg_sigreg=1.324174  avg_raw_z_norm=5.468
+epoch 340/350  avg_loss=0.196653  avg_inv_loss=1.030944  avg_sigreg=1.322191  avg_raw_z_norm=5.468
+epoch 341/350  avg_loss=0.196095  avg_inv_loss=1.032879  avg_sigreg=1.315402  avg_raw_z_norm=5.467
+epoch 342/350  avg_loss=0.194986  avg_inv_loss=1.030899  avg_sigreg=1.305550  avg_raw_z_norm=5.469
+epoch 343/350  avg_loss=0.195777  avg_inv_loss=1.030513  avg_sigreg=1.313703  avg_raw_z_norm=5.468
+epoch 344/350  avg_loss=0.193951  avg_inv_loss=1.012361  avg_sigreg=1.306783  avg_raw_z_norm=5.468
+epoch 345/350  avg_loss=0.194431  avg_inv_loss=1.019413  avg_sigreg=1.307174  avg_raw_z_norm=5.469
+epoch 346/350  avg_loss=0.193808  avg_inv_loss=1.011411  avg_sigreg=1.305946  avg_raw_z_norm=5.467
+epoch 347/350  avg_loss=0.194183  avg_inv_loss=1.008075  avg_sigreg=1.311786  avg_raw_z_norm=5.471
+epoch 348/350  avg_loss=0.194712  avg_inv_loss=1.010831  avg_sigreg=1.315350  avg_raw_z_norm=5.468
+epoch 349/350  avg_loss=0.193838  avg_inv_loss=1.008996  avg_sigreg=1.307753  avg_raw_z_norm=5.467
+epoch 350/350  avg_loss=0.193976  avg_inv_loss=1.014513  avg_sigreg=1.305691  avg_raw_z_norm=5.467
+Checkpoint saved to jepa_checkpoint_strided.pt, log saved to jepa_training_log_strided.csv
+Using device: mps
+Loaded encoder from jepa_checkpoint_strided.pt (k_context=3, latent_dim=32)
+Loaded 20 eval episodes from jepa_eval_data/
+16 train episodes, 4 held-out episodes  (3216/804 single frames, 3184/796 3-frame windows, train/test)
+
+Probe 1 (strided model): single-frame z -> position
+Fit rank: 33/33 (feature dim + 1 bias column)
+dim           train R^2   test R^2
+cup_x            0.9388     0.9262
+cup_z            0.9439     0.9376
+ball_x           0.9907     0.9872
+ball_z           0.9735     0.9660
+mean             0.9617     0.9543
+
+Probe 2 (strided model): 3-frame window of z's -> position + velocity
+Fit rank: 97/97 (feature dim + 1 bias column)
+dim           train R^2   test R^2
+cup_x            0.9526     0.9389
+cup_z            0.9534     0.9479
+ball_x           0.9938     0.9909
+ball_z           0.9810     0.9720
+cup_x_vel        0.4421     0.4707
+cup_z_vel        0.3830     0.4110
+ball_x_vel       0.8390     0.8088
+ball_z_vel       0.7450     0.7433
+mean             0.7863     0.7854
+
+Saved position_probe_strided.npz and state_probe_strided.npz.
+Using device: mps
+Loaded encoder from jepa_checkpoint_strided.pt (latent_dim=32)
+Loaded 20 eval episodes from jepa_eval_data/
+16 train episodes, 4 held-out episodes  (3216/804 single frames, train/test)
+
+Training MLP probe (single-frame z -> position)...
+  epoch   50/300  train_loss=0.0147  train_R2=0.9860  test_R2=0.9755
+  epoch  100/300  train_loss=0.0111  train_R2=0.9894  test_R2=0.9772
+  epoch  150/300  train_loss=0.0099  train_R2=0.9902  test_R2=0.9763
+  epoch  200/300  train_loss=0.0081  train_R2=0.9921  test_R2=0.9766
+  epoch  250/300  train_loss=0.0071  train_R2=0.9930  test_R2=0.9773
+  epoch  300/300  train_loss=0.0068  train_R2=0.9932  test_R2=0.9764
+
+MLP probe -- final per-dim R^2
+dim           train R^2   test R^2
+cup_x            0.9883     0.9532
+cup_z            0.9884     0.9670
+ball_x           0.9986     0.9958
+ball_z           0.9976     0.9896
+mean             0.9932     0.9764
+
+Ball position L2 error (test set): mean=0.0072m  median=0.0057m  max=0.0911m
+(compare to drift_diagnostic_strided.py's tau=0 linear-probe number: 0.0827m)
+
+Saved MLP probe to position_probe_strided_mlp.pt
+100 (episode, start) rollouts, each 30 P-calls (150 real steps, 3.00s).
+
+tau (calls)   real s   cup L2 err (m)    ball L2 err (m)   ball z-vel err (m/s)
+          0     0.00           0.1032             0.2644                     --
+          5     0.50           0.2012             0.4752                 0.7766
+         10     1.00           0.2210             0.4857                 0.6250
+         15     1.50           0.2222             0.4913                 0.5237
+         20     2.00           0.2240             0.4667                 0.5603
+         25     2.50           0.2282             0.4891                 0.5482
+         29     2.90           0.2294             0.4718                 0.5554
+
+Ball position error first exceeds the task's own success tolerance (0.025 m) at tau=0 calls (0.00s of rollout).

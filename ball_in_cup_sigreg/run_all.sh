@@ -3,6 +3,7 @@
 set -e
 cd "$(dirname "$0")"
 uv run python jepa_train_strided.py
+uv run python recalibrate_bn.py
 uv run python eval_linear_probe_strided.py
 uv run python eval_mlp_probe_strided.py
 uv run python drift_diagnostic_strided.py

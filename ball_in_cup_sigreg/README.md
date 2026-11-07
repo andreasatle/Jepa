@@ -2,17 +2,19 @@
 
 A copy of `../ball_in_cup` with **one change**: the hand-weighted VICReg-style covariance penalty is replaced by SIGReg (LeJEPA's sliced Epps–Pulley test against N(0, I)), weighted as in LeWorldModel (arXiv 2603.19312): `loss = MSE + 0.1 · SIGReg`. Data, E, P, unroll, optimiser, 350 epochs, seed, probes and planner are unchanged; see the docstring of `jepa_train_strided.py`. Run with `./run_all.sh`.
 
-| | VICReg-style (`ball_in_cup`) | SIGReg (this folder) |
-|---|---|---|
-| Linear probe, position, test R² | ~0.94 | 0.956 |
-| MLP probe, ball position error (test) | 0.0067 m | 0.0055 m |
-| Drift, ball error over the 3 s rollout | flat ~0.08–0.11 m | flat 0.08–0.11 m |
-| Success, 30 random starts, 24 s | 29/30 (97%) | 26/30 (87%) |
-| Success, 100 paired starts (`N_TRIALS=100 SEEDED=1`), 24 s | 96/100 | 94/100 |
+| | VICReg-style (`ball_in_cup`) | SIGReg, run 1: no projector | SIGReg, run 2: BatchNorm projector |
+|---|---|---|---|
+| Linear probe, position, test R² | ~0.94 | 0.956 | 0.954 |
+| MLP probe, ball position error (test) | 0.0067 m | 0.0055 m | 0.0068 m |
+| Drift, ball error over the 3 s rollout | flat ~0.08–0.11 m | flat 0.08–0.11 m | flat 0.07–0.10 m |
+| Success, 30 random starts, 24 s | 29/30 (97%) | 26/30 (87%) | — |
+| Success, 100 paired starts (`N_TRIALS=100 SEEDED=1`), 24 s | 96/100 | 94/100 | 96/100 |
 
 - **Representation: as good or slightly better,** with no hand-set weighting between diagonal and off-diagonal.
-- **Control: the same.** First 26/30 vs 29/30 (Fisher exact p ≈ 0.35), then 100 paired starts (same initial condition and CEM seed per trial for both models, `batch100.log` in `ball_in_cup`, `batch100_noproj.log` here): 96 vs 94. Both solved 90, only the original 6, only SIGReg 4, neither 0; McNemar exact p = 0.75. The 30-trial gap was chance. One training seed each.
-- **Start of training:** the run sat fully collapsed for 6 epochs (SIGReg = 33.6 = 0.131 · 256, the collapse value) before escaping: at exact collapse every projection is 0 and SIGReg's gradient vanishes (d/dx cos(tx) = 0 at x = 0), the same trap as VICReg's unsquare-rooted diagonal. LeJEPA and LeWM avoid it with a BatchNorm projector; this E has none.
+- **Control: the same.** 100 paired starts (same initial condition and CEM seed per trial for every model). Run 1 vs the original: both solved 90, only the original 6, only SIGReg 4; McNemar exact p = 0.75 (the earlier 26/30 vs 29/30 was chance). Run 2 vs the original: both 92, only the original 4, only SIGReg 4; p = 1. One training seed each.
+- **Run 1, start of training:** the run sat fully collapsed for 6 epochs (SIGReg = 33.6 = 0.131 · 256, the collapse value) before escaping: at exact collapse every projection is 0 and SIGReg's gradient vanishes (d/dx cos(tx) = 0 at x = 0), the same trap as VICReg's unsquare-rooted diagonal. Logs: `run_all_noproj.log`, `batch100_noproj.log`.
+- **Run 2 (2026-11-07): LeWorldModel's projector,** Linear + BatchNorm after E (`jepa_train.py`). No stall: epoch 0 SIGReg 8.7 instead of 33.6. Logs: `run_all.log` (training and the first evaluation), `run_all_eval.log` (the evaluation after recalibration), `batch100.log`.
+- **Run 2's pitfall, BatchNorm's stored statistics:** the first evaluation solved only 29/100. The pre-BN features ended with a large common offset (|mean| 1.47) and a tiny spread (std 0.008), so the running mean's normal EMA noise shifted eval-mode z by about one standard deviation (1.40 on average), and the planner runs E in eval mode. One-step prediction loss: 0.97 in train mode, 24.4 in eval mode. The fix is precise BatchNorm (Wu & Johnson 2021): `recalibrate_bn.py` recomputes the statistics as a plain average over the training data after training, with the weights frozen (loss 0.94); it is now a step of `run_all.sh`. The stale-statistics checkpoint and logs are kept under `runs/`.
 
 The original README follows.
 
