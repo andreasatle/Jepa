@@ -11,7 +11,7 @@ A copy of `../ball_in_cup` with **one change**: the hand-weighted VICReg-style c
 | Success, 100 paired starts (`N_TRIALS=100 SEEDED=1`), 24 s | 96/100 | 94/100 |
 
 - **Representation: as good or slightly better,** with no hand-set weighting between diagonal and off-diagonal.
-- **Control: the same.** First 26/30 vs 29/30 (Fisher exact p ≈ 0.35), then 100 paired starts (same initial condition and CEM seed per trial for both models, `batch100.log` in each folder): 96 vs 94. Both solved 90, only the original 6, only SIGReg 4, neither 0; McNemar exact p = 0.75. The 30-trial gap was chance. One training seed each.
+- **Control: the same.** First 26/30 vs 29/30 (Fisher exact p ≈ 0.35), then 100 paired starts (same initial condition and CEM seed per trial for both models, `batch100.log` in `ball_in_cup`, `batch100_noproj.log` here): 96 vs 94. Both solved 90, only the original 6, only SIGReg 4, neither 0; McNemar exact p = 0.75. The 30-trial gap was chance. One training seed each.
 - **Start of training:** the run sat fully collapsed for 6 epochs (SIGReg = 33.6 = 0.131 · 256, the collapse value) before escaping: at exact collapse every projection is 0 and SIGReg's gradient vanishes (d/dx cos(tx) = 0 at x = 0), the same trap as VICReg's unsquare-rooted diagonal. LeJEPA and LeWM avoid it with a BatchNorm projector; this E has none.
 
 The original README follows.

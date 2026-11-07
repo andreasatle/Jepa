@@ -229,9 +229,15 @@ class Encoder(nn.Module):
             nn.Flatten(),
             nn.Linear(256 * 4 * 4, latent_dim),
         )
+        # ball_in_cup_sigreg, run 2 (2026-11-06): LeWorldModel's projector, a 1-layer MLP with
+        # BatchNorm, so z (what P, SIGReg and the probes see) is standardised per dimension over
+        # the batch. Even near-identical frames then give unit-variance z, so training can't
+        # start at collapse, where SIGReg's gradient vanishes. Planning runs E in eval() mode,
+        # which uses BatchNorm's running statistics, so a single frame is fine.
+        self.projector = nn.Sequential(nn.Linear(latent_dim, latent_dim), nn.BatchNorm1d(latent_dim))
 
     def forward(self, x):
-        return self.net(x)
+        return self.projector(self.net(x))
 
 
 class Predictor(nn.Module):
