@@ -1,0 +1,105 @@
+Using probe: position_probe_strided_mlp.pt (MLP)
+trial  1/100: SOLVED at 6.90s
+trial  2/100: SOLVED at 5.80s
+trial  3/100: SOLVED at 12.40s
+trial  4/100: SOLVED at 2.40s
+trial  5/100: SOLVED at 23.50s
+trial  6/100: SOLVED at 5.10s
+trial  7/100: SOLVED at 5.40s
+trial  8/100: SOLVED at 3.80s
+trial  9/100: SOLVED at 1.20s
+trial 10/100: SOLVED at 10.20s
+trial 11/100: SOLVED at 5.90s
+trial 12/100: SOLVED at 2.20s
+trial 13/100: SOLVED at 1.60s
+trial 14/100: SOLVED at 0.30s
+trial 15/100: SOLVED at 4.70s
+trial 16/100: SOLVED at 3.40s
+trial 17/100: SOLVED at 11.20s
+trial 18/100: SOLVED at 1.60s
+trial 19/100: SOLVED at 6.70s
+trial 20/100: SOLVED at 0.40s
+trial 21/100: SOLVED at 8.60s
+trial 22/100: SOLVED at 20.30s
+trial 23/100: SOLVED at 7.30s
+trial 24/100: SOLVED at 23.30s
+trial 25/100: SOLVED at 10.50s
+trial 26/100: SOLVED at 8.50s
+trial 27/100: SOLVED at 0.30s
+trial 28/100: SOLVED at 10.70s
+trial 29/100: SOLVED at 21.20s
+trial 30/100: not solved, closest 0.0885m @ step 5
+trial 31/100: SOLVED at 1.30s
+trial 32/100: SOLVED at 3.90s
+trial 33/100: SOLVED at 11.90s
+trial 34/100: SOLVED at 8.40s
+trial 35/100: SOLVED at 15.00s
+trial 36/100: SOLVED at 2.40s
+trial 37/100: SOLVED at 7.50s
+trial 38/100: SOLVED at 6.50s
+trial 39/100: SOLVED at 0.20s
+trial 40/100: not solved, closest 0.0716m @ step 890
+trial 41/100: SOLVED at 10.00s
+trial 42/100: SOLVED at 0.20s
+trial 43/100: SOLVED at 6.80s
+trial 44/100: SOLVED at 1.90s
+trial 45/100: SOLVED at 9.20s
+trial 46/100: SOLVED at 7.60s
+trial 47/100: SOLVED at 1.10s
+trial 48/100: SOLVED at 14.20s
+trial 49/100: SOLVED at 15.00s
+trial 50/100: SOLVED at 7.60s
+trial 51/100: SOLVED at 10.60s
+trial 52/100: SOLVED at 13.90s
+trial 53/100: not solved, closest 0.0765m @ step 155
+trial 54/100: SOLVED at 0.90s
+trial 55/100: SOLVED at 1.00s
+trial 56/100: SOLVED at 10.70s
+trial 57/100: SOLVED at 12.20s
+trial 58/100: SOLVED at 4.60s
+trial 59/100: SOLVED at 8.20s
+trial 60/100: SOLVED at 17.80s
+trial 61/100: SOLVED at 19.60s
+trial 62/100: SOLVED at 4.00s
+trial 63/100: SOLVED at 14.00s
+trial 64/100: SOLVED at 1.10s
+trial 65/100: SOLVED at 2.20s
+trial 66/100: SOLVED at 5.50s
+trial 67/100: SOLVED at 0.10s
+trial 68/100: SOLVED at 2.10s
+trial 69/100: not solved, closest 0.0876m @ step 1115
+trial 70/100: SOLVED at 12.80s
+trial 71/100: SOLVED at 18.30s
+trial 72/100: SOLVED at 14.40s
+trial 73/100: SOLVED at 0.10s
+trial 74/100: SOLVED at 2.00s
+trial 75/100: SOLVED at 9.90s
+trial 76/100: SOLVED at 16.70s
+trial 77/100: SOLVED at 1.00s
+trial 78/100: SOLVED at 6.70s
+trial 79/100: SOLVED at 0.10s
+trial 80/100: SOLVED at 0.20s
+trial 81/100: SOLVED at 5.30s
+trial 82/100: SOLVED at 6.70s
+trial 83/100: SOLVED at 4.10s
+trial 84/100: SOLVED at 9.60s
+trial 85/100: SOLVED at 13.70s
+trial 86/100: SOLVED at 18.80s
+trial 87/100: SOLVED at 0.30s
+trial 88/100: SOLVED at 0.30s
+trial 89/100: SOLVED at 14.10s
+trial 90/100: not solved, closest 0.0561m @ step 45
+trial 91/100: SOLVED at 2.30s
+trial 92/100: not solved, closest 0.0699m @ step 200
+trial 93/100: SOLVED at 12.50s
+trial 94/100: SOLVED at 7.30s
+trial 95/100: SOLVED at 17.20s
+trial 96/100: SOLVED at 11.00s
+trial 97/100: SOLVED at 4.00s
+trial 98/100: SOLVED at 1.80s
+trial 99/100: SOLVED at 3.10s
+trial 100/100: SOLVED at 15.70s
+
+success rate: 94/100
+solve times (s): mean=7.60  min=0.10  max=23.50
+closest approach (m), all trials: mean=0.0252  min=0.0041  max=0.0885
