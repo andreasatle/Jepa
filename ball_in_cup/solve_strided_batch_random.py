@@ -21,9 +21,14 @@ import cem_planner_strided as cps
 import jepa_evaluator as je
 import jepa_train as jt
 import solve_strided as ss
+import os
 import sys
 
-N_TRIALS = 30
+# N_TRIALS and SEEDED from the environment (defaults: 30, unseeded, as before). SEEDED=1 makes
+# trial i use seed i for the task's initial condition and for CEM's sampling, so two models
+# can be compared on the same starts (paired).
+N_TRIALS = int(os.environ.get("N_TRIALS", 30))
+SEEDED = os.environ.get("SEEDED") == "1"
 
 
 def main():
@@ -37,7 +42,11 @@ def main():
 
     results = []
     for trial in range(1, N_TRIALS + 1):
-        env = suite.load(domain_name="ball_in_cup", task_name="catch")
+        if SEEDED:
+            np.random.seed(trial)
+            torch.manual_seed(trial)
+        env = suite.load(domain_name="ball_in_cup", task_name="catch",
+                         task_kwargs={"random": trial} if SEEDED else None)
         env.reset()  # task's own randomized IC -- no steady-state override
 
         def render_model():
