@@ -1,0 +1,72 @@
+/Users/andreasatle/Projects/Jepa/pusht/model.py:61: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  self.blocks = nn.TransformerEncoder(layer, depth)
+objc[77864]: Class SDLApplication is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8890) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de8652c8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDLAppDelegate is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e88e0) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de865318). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDLTranslatorResponder is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8958) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de865390). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDLMessageBoxPresenter is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8980) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de8653b8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDL_cocoametalview is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e89d0) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de865408). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDLOpenGLContext is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8a20) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de865458). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDL_ShapeData is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8a98) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de8654d0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDL_CocoaClosure is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8ae8) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de865520). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDL_VideoData is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8b38) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de865570). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDL_WindowData is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8b88) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de8655c0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDLWindow is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8bb0) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de8655e8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class Cocoa_WindowListener is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8bd8) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de865610). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDLView is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8c50) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de865688). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class METAL_RenderData is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8cc8) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de865700). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class METAL_TextureData is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8d18) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de865750). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDL_RumbleMotor is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8d40) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de865778). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[77864]: Class SDL_RumbleContext is implemented in both /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x1142e8d90) and /Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x9de8657c8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+/Users/andreasatle/Projects/Jepa/.venv/lib/python3.12/site-packages/gymnasium/spaces/box.py:486: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+trial  0: not solved
+trial  1: not solved
+trial  2: not solved
+trial  3: SOLVED
+trial  4: not solved
+trial  5: not solved
+trial  6: not solved
+trial  7: not solved
+trial  8: not solved
+trial  9: not solved
+trial 10: SOLVED
+trial 11: not solved
+trial 12: not solved
+trial 13: not solved
+trial 14: not solved
+trial 15: not solved
+trial 16: not solved
+trial 17: not solved
+trial 18: not solved
+trial 19: SOLVED
+trial 20: not solved
+trial 21: not solved
+trial 22: not solved
+trial 23: not solved
+trial 24: not solved
+trial 25: not solved
+trial 26: not solved
+trial 27: not solved
+trial 28: not solved
+trial 29: not solved
+trial 30: SOLVED
+trial 31: not solved
+trial 32: SOLVED
+trial 33: not solved
+trial 34: not solved
+trial 35: not solved
+trial 36: not solved
+trial 37: not solved
+trial 38: not solved
+trial 39: not solved
+trial 40: not solved
+trial 41: not solved
+trial 42: not solved
+trial 43: not solved
+trial 44: not solved
+trial 45: not solved
+trial 46: not solved
+trial 47: not solved
+trial 48: not solved
+trial 49: not solved
+success rate: 5/50  (runs/vicreg-s0/model.pt)

@@ -12,3 +12,5 @@ wheels/
 # OS files
 .DS_Store
 _to_delete/
+pusht/data/
+pusht/runs/*/model.pt
