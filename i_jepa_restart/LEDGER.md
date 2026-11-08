@@ -5,13 +5,21 @@ The current method is LeJEPA (`lejepa.py`); I-JEPA (`ijepa.py`) is kept as the r
 Every component in the code and what justifies it. Anything not listed here gets deleted.
 Changes are made one at a time and measured against the baseline with the same probes.
 
-## Probes (`probes/probe.py`)
+## Probes: the reference (`probes/probe.py`, `probes/scarce.py`)
 
-Frozen encoder, full image, mean of the 196 patch embeddings per image.
-- **Linear:** logistic regression on the train split, accuracy on val.
-- **k-NN:** k = 20, cosine similarity, majority vote.
+A probe asks whether a label nobody showed the encoder can be read off its frozen features. Its truth comes from outside the latent space (the tissue class), so it is evidence; the training loss is not, because it only compares embeddings with embeddings.
 
-Floor = the same probes on a randomly initialised encoder of the same config.
+**Features, shared by every probe.** The encoder is frozen and in eval mode. Each image is fed whole (224 px, no augmentation, ImageNet normalisation), and its 196 patch embeddings are averaged into one 192-d vector. The ImageNet arm uses ResNet-18's 512-d global-average-pooled vector instead. Features are cached in `probes/cache/`.
+
+- **Linear probe** (`linear_probe`). Multinomial logistic regression, 9 classes, on features standardised with the train statistics only. Full batch, L-BFGS, 500 iterations, L2 weight 1e-4. *Mechanism:* one hyperplane per class, so it succeeds only if the classes already lie in separable half-spaces of the embedding. *Measures:* linearly decodable class information, the standard SSL number and the one comparable across papers. *Fundamental:* yes, it is the goal's metric (PLAN.md). The train accuracy is reported beside it: a large train/eval gap means overfitting, which matters with 901 labels.
+- **k-NN probe** (`knn_probe`). No training at all: each eval image takes the majority label of its k = 20 most cosine-similar train images (k = min(20, n) in the scarce test). *Mechanism:* local neighbourhoods only, no learned boundary. *Measures:* the raw geometry, whether same-class images are near each other. *Fundamental:* no, a cross-check. It is free of optimisation choices, so a linear gain that k-NN doesn't share points to a probe artefact rather than better features.
+- **MLP probe:** not used here. A nonlinear head can carve classes out of almost any rich feature, including random ones, so it says less about the embedding. (The ball-in-cup project uses one to decode position, a different question.)
+
+**How to read the numbers.**
+1. **Against the floor first:** the same probe on a random-init encoder of the same config (`--random`). A random ViT already gives 68% with all labels and 56–57% with 1%, so only the distance above the floor is what pretraining did.
+2. **Val vs test:** val comes from the training centre, test from another clinical centre. Checkpoints and settings are chosen on val only. Test is scored once, at the end, and also measures how well the features travel (I-JEPA vs LeJEPA was close on val, 10 points apart on test).
+3. **Noise:** seed-to-seed spread is about 1–3 points with 901 labels, and well under 1 point with all labels. Differences inside that spread are not results.
+4. **In the label-scarce test** the probe is fitted on the subset only (901 images, the same subset for every arm), so it competes on equal labels with networks trained end to end on that subset.
 
 ## Results (val accuracy, linear / k-NN)
 

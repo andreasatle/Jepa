@@ -16,6 +16,8 @@ A copy of `../ball_in_cup` with **one change**: the hand-weighted VICReg-style c
 - **Run 2 (2026-11-07): LeWorldModel's projector,** Linear + BatchNorm after E (`jepa_train.py`). No stall: epoch 0 SIGReg 8.7 instead of 33.6. Logs: `run_all.log` (training and the first evaluation), `run_all_eval.log` (the evaluation after recalibration), `batch100.log`.
 - **Run 2's pitfall, BatchNorm's stored statistics:** the first evaluation solved only 29/100. The pre-BN features ended with a large common offset (|mean| 1.47) and a tiny spread (std 0.008), so the running mean's normal EMA noise shifted eval-mode z by about one standard deviation (1.40 on average), and the planner runs E in eval mode. One-step prediction loss: 0.97 in train mode, 24.4 in eval mode. The fix is precise BatchNorm (Wu & Johnson 2021): `recalibrate_bn.py` recomputes the statistics as a plain average over the training data after training, with the weights frozen (loss 0.94); it is now a step of `run_all.sh`. The stale-statistics checkpoint and logs are kept under `runs/`.
 
+**Status: closed (2026-11-08).** The question was whether SIGReg beats the hand-weighted VICReg-style penalty on this world model. It ties (96 vs 96 paired), with a principled loss and no square-root patch. Ball-in-cup is near the ceiling for both, so a ranking would need a new experiment: several training seeds per method, a tighter time budget or a harder task.
+
 The original README follows.
 
 # JEPA + CEM/MPC on `ball_in_cup-catch`

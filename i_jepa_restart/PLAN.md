@@ -26,21 +26,25 @@ Fine-tuning (unfreezing the encoder while training the classifier) is a differen
 - Start from the LeJEPA recipe (`lejepa.py`): 2 global + 6 local views, every view's projection pulled to the mean of the global views' projections, SIGReg (sliced Epps–Pulley, 1024 directions per view per step) with λ = 0.05, no EMA, no predictor, no stop-gradient. One decided deviation: views at native resolution, no zoom (the user: zooming builds in a bias; it costs about 1 point, LEDGER.md).
 - One change at a time, measured against the same baseline with the same probes. A change stays only if it clearly helps; otherwise it comes out.
 - `LEDGER.md` lists every component in the code and the measurement that justifies it. Anything not in the ledger gets deleted.
-- Tests are few and fixed: the views, SIGReg's value on known samples (Gaussian ≈ 0.52, collapse ≈ 0.131·n), and the probe separating floor from ceiling. No test per change. (The existing `checks/` are I-JEPA's; the two LeJEPA checks are still to be written, see To-do.)
+- Tests are few and fixed: the views, SIGReg's value on known samples (Gaussian ≈ 0.52, collapse ≈ 0.131·n), and the probe separating floor from ceiling. No test per change. (`checks/check_lejepa.py` holds LeJEPA's; the rest of `checks/` is I-JEPA's.)
 - Keep experiments fast (lower resolution / small ViT) so each one takes minutes, not overnight.
 
 ## Steps
 
 1. [x] Choose the goal statement above (label-scarce, 2026-11-05).
-2. [ ] Validate the measuring stick: the probes must clearly separate a random encoder (floor) from a known-good encoder (ceiling) before any training.
+2. [x] Validate the measuring stick: the probes clearly separate a random encoder (floor, 68.1% test with all labels) from trained ones (92.8%), with seed spread far below the gap.
 3. [x] Minimal LeJEPA (paper recipe), trained and probed (I-JEPA before it, kept as reference).
-4. [ ] Changes one at a time, each recorded in `LEDGER.md`.
+4. [x] Changes one at a time, each recorded in `LEDGER.md`.
+
+## Status: closed (2026-11-08)
+
+The goal is met: with 1% of the labels, frozen LeJEPA features reach 89.0% on the other centre's test images, against 81.6% for ResNet-18 from scratch, 86.1% for frozen ImageNet features and 89.6% for fine-tuned ImageNet (LEDGER.md). The open ideas (bigger pretraining, anomaly detection) would be new experiments, not unfinished ones.
 
 ## To-do
 
-- [ ] At the probe step: write a full reference section on the probes (linear, k-NN, and MLP only if used) — how each works mechanically, what it measures, fundamental vs. convenience, and how to read the numbers against the random-init baseline. All probes in one place.
-- [ ] Fix the I-JEPA page on atle.dev: it says "EMA-free", but v4 had the EMA teacher.
-- [ ] LeJEPA checks in `checks/`: the multi-crop views (sizes, count, native resolution) and SIGReg on known samples (a Gaussian sample near 0.52, a collapsed one near 0.131·n).
+- [x] At the probe step: write a full reference section on the probes (done 2026-11-08: LEDGER.md, "Probes: the reference") (linear, k-NN, and MLP only if used) — how each works mechanically, what it measures, fundamental vs. convenience, and how to read the numbers against the random-init baseline. All probes in one place.
+- [x] Fix the I-JEPA page on atle.dev: it said "EMA-free", but v4 had the EMA teacher. (Resolved by the 2026-11-06 rewrite: the page is now LeJEPA's and says I-JEPA needed an EMA teacher; no "EMA-free" left on the site.)
+- [x] LeJEPA checks in `checks/check_lejepa.py` (2026-11-08; Gaussian 0.55, collapse 0.1314·n): the multi-crop views (sizes, count, native resolution) and SIGReg on known samples (a Gaussian sample near 0.52, a collapsed one near 0.131·n).
 - [ ] The folder name `i_jepa_restart` is the user's call (2026-11-05: `train.py` is now `ijepa.py`, and README, PLAN and LEDGER name LeJEPA as current); renaming the folder (e.g. `jepa_pathmnist`) breaks ledger paths and the probe cache.
 
 ## Terms
