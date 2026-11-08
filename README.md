@@ -16,4 +16,4 @@ directory; paths in the code are relative to the current directory.
 
 - [`ball_in_cup_sigreg/`](ball_in_cup_sigreg/README.md) — the same world model with SIGReg in place of the VICReg-style penalty, as in LeWorldModel: ties the original (96 vs 96 of 100 paired starts). Closed.
 
-- [`i_jepa_restart/`](i_jepa_restart/PLAN.md) — self-supervised learning on PathMNIST with LeJEPA (no EMA), one validated step at a time; started as a clean restart of I-JEPA, which stays there as the reference. Closed: with 1% of the labels it matches fine-tuned ImageNet on another clinic's images. `i_jepa/` is the earlier I-JEPA attempt, kept for reference.
+- [`jepa_pathmnist/`](jepa_pathmnist/PLAN.md) — self-supervised learning on PathMNIST with LeJEPA (no EMA), one validated step at a time; started as a clean restart of I-JEPA, which stays there as the reference. Closed: with 1% of the labels it matches fine-tuned ImageNet on another clinic's images. `i_jepa/` is the earlier I-JEPA attempt, kept for reference.

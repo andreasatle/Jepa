@@ -45,7 +45,7 @@ The goal is met: with 1% of the labels, frozen LeJEPA features reach 89.0% on th
 - [x] At the probe step: write a full reference section on the probes (done 2026-11-08: LEDGER.md, "Probes: the reference") (linear, k-NN, and MLP only if used) — how each works mechanically, what it measures, fundamental vs. convenience, and how to read the numbers against the random-init baseline. All probes in one place.
 - [x] Fix the I-JEPA page on atle.dev: it said "EMA-free", but v4 had the EMA teacher. (Resolved by the 2026-11-06 rewrite: the page is now LeJEPA's and says I-JEPA needed an EMA teacher; no "EMA-free" left on the site.)
 - [x] LeJEPA checks in `checks/check_lejepa.py` (2026-11-08; Gaussian 0.55, collapse 0.1314·n): the multi-crop views (sizes, count, native resolution) and SIGReg on known samples (a Gaussian sample near 0.52, a collapsed one near 0.131·n).
-- [ ] The folder name `i_jepa_restart` is the user's call (2026-11-05: `train.py` is now `ijepa.py`, and README, PLAN and LEDGER name LeJEPA as current); renaming the folder (e.g. `jepa_pathmnist`) breaks ledger paths and the probe cache.
+- [x] The folder is renamed `jepa_pathmnist` (the user, 2026-11-08; was `i_jepa_restart`). Run logs in `runs/*.out` still show the old path.
 
 ## Terms
 

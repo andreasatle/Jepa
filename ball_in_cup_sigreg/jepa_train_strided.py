@@ -141,7 +141,7 @@ SIGREG_WEIGHT = 0.1       # LeWorldModel's default; its success stays high for 0
 
 def sigreg(z, num_slices=1024, num_points=17, t_max=5.0):
     """SIGReg: n * Epps-Pulley distance of z's 1-D projections from N(0, 1), averaged over
-    random unit directions (same code as i_jepa_restart/loss.py). z: (n, D)."""
+    random unit directions (same code as jepa_pathmnist/loss.py). z: (n, D)."""
     n, d = z.shape
     a = torch.randn(d, num_slices, device=z.device)
     a = a / a.norm(dim=0, keepdim=True)
