@@ -205,6 +205,14 @@ $$
 
 (Checked numerically: for 50 points, the closed form and this integral agree to ten digits.)
 
+**The smoothing is the heat equation.** Blurring with a Gaussian bump is running the heat equation $\partial_s u=\partial_x^2 u$ on the density: after time $s$ the density has been convolved with $\mathcal{N}(0,2s)$, which in $t$ is multiplication by $e^{-st^2}$, because the Laplacian $\partial_x^2$ becomes $-t^2$ under the Fourier transform. Section 6's blur, $\widehat{g}=e^{-t^2/2}$, is the heat flow for time $s=\tfrac12$, written $e^{\Delta/2}$. So the statistic is the $L^2$ distance between sample and bell after both have diffused for half a unit of time:
+
+$$
+\frac{\mathrm{EP}}{n}=2\pi\,\bigl\lVert e^{\Delta/2}(\widehat{p}-p)\bigr\rVert_{L^2}^2=2\pi\,\bigl\langle \widehat{p}-p,\;e^{\Delta}(\widehat{p}-p)\bigr\rangle,
+$$
+
+with $\widehat{p}$ the sample (spikes at the $x_j$) and $p$ the $\mathcal{N}(0,1)$ density. The second form is section 5's kernel (MMD) form: the pair kernel is the heat kernel at time 1, $\mathcal{N}(0,2)$, whose shape is $e^{-(x_j-x_k)^2/4}$. The weight $e^{-at^2}$ in general means diffusion for time $a/2$ on each side, so the weight's width is a diffusion time: longer diffusion compares only coarse shape, shorter diffusion sees finer detail and more noise. And $w=1$ (below) is no diffusion at all, which is why spikes can never match a smooth bell.
+
 **Why there must be a weight: $w=1$ fails.** A sample is $n$ spikes, and spikes never fade in frequency: at large $t$, $\widehat{\varphi}$ is $n$ points spinning around the circle at unrelated speeds, with squared size about $1/n$ (section 3's noise with $\varphi\approx0$). Integrating that over all $t$ gives infinity, for every sample, even a perfectly Gaussian one. In the kernel view, $w=1$ means a delta-spike kernel, no smoothing: a set of spikes can never match a smooth bell. Cutting the integral off at $t=5$, as the code does, keeps it finite but still bad: a true Gaussian would score about 8.2 on average instead of 0.52, almost all of it high-$t$ noise, and the kernel becomes $\sin(5d)/d$, which changes sign, so points at some distances would attract instead of repel.
 
 **Changing the weight changes the ruler, not the zero.** The bump's transform $e^{-t^2/2}$ is never zero, so smoothing is invertible: two distributions that differ still differ after smoothing. The distance is 0 for exactly $\mathcal{N}(0,1)$ and nothing else, whatever the weight. With infinite data any positive weight detects every departure. With finite data the weight decides which departures count most, i.e. how many samples it takes to see each one. A weight $e^{-at^2}$ (ours is $a=1$) has pair kernel $e^{-(x_j-x_k)^2/(4a)}$:
@@ -249,7 +257,7 @@ This is the noise formula of section 3, multiplied by $n$ and integrated against
 The idea is the same; the use differs in four ways.
 
 1. **No standardisation.** The classic test first rescales the sample to mean 0 and standard deviation 1, because it asks "is this *some* normal distribution?", whatever the mean and spread. SIGReg tests against exactly $\mathcal{N}(0,1)$, unstandardised. That is what makes it fight collapse: a collapsed sample has spread 0, and only an unstandardised test sees that (section 5's 16.8). Standardising first would hide it.
-2. **The weight's width.** The weight's width is a free choice (it decides how much the test cares about coarse versus fine shape, section 6); LeJEPA uses $e^{-t^2}$.
+2. **The weight's width.** The weight's width is a free choice (it decides how much the test cares about coarse versus fine shape, section 6); LeJEPA uses $e^{-t^2}$. LeWorldModel's code uses $e^{-t^2/2}$ instead: half the diffusion time ($s=\tfrac14$ on each side, a blur of $\mathcal{N}(0,\tfrac12)$, pair kernel $e^{-(x_j-x_k)^2/2}$), so a slightly sharper, slightly noisier comparison. Both are 0 for exactly $\mathcal{N}(0,1)$ and nothing else (section 6), so they push toward the same target; only the ruler differs. (Checked numerically for both weights: the characteristic-function integral equals $2\pi$ times the $L^2$ distance of the blurred densities.)
 3. **One direction at a time.** SIGReg applies the test to the batch projected onto many random directions and averages the scores (sliced). By the Cramér–Wold theorem, a distribution in many dimensions is Gaussian if every one-dimensional projection is.
 4. **A loss, not a verdict.** Nobody rejects anything: the score itself is minimised by gradient descent. The test's properties become a loss's properties: the score depends smoothly on every $x_j$ (through $\cos$, $\sin$ and $e^{(\cdots)}$), and the gradient stays bounded however far out a point is, so a single outlier can't blow up training.
 
