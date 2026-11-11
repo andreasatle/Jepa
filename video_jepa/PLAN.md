@@ -2,7 +2,7 @@
 
 **Goal (the user, 2026-11-09):** understand V-JEPA, a JEPA on video, by building a small one end to end. Not a benchmark: the point is to see each mechanism work (or fail) at a size the Mac can train in hours.
 
-**Status: step 1 done (2026-11-11); step 2 next.** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
+**Status: steps 1-2 done (2026-11-11); step 3 next.** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
 
 ## What the papers say
 
@@ -45,7 +45,7 @@ Probes are fitted on frozen features of training episodes and scored (R²) on he
 Each step ends with a check that must pass before the next (`checks/`, as in `jepa_pathmnist`).
 
 1. [x] **Clips and labels** (`data.py`, `checks/check_data.py`). A dataset of 16-frame clips from training episodes and a held-out one; probe targets (position, velocity, angular velocity, contact) from the state. Check: velocities from state differences match the recorded pusher velocity; a clip's frames are 2 steps apart; no held-out episode in training.
-2. **Encoder and probes, untrained.** The ViT, the attentive and linear probes, the probe training loop. Check: shapes and token counts; the probes fit the targets from *ground-truth* state features almost perfectly (the harness works); the random-init floor for every target.
+2. [x] **Encoder and probes, untrained** (`model.py`, `probes.py`, `checks/check_model.py`, `checks/check_probes.py`). The ViT, the attentive and linear probes, the probe training loop. Check: shapes and token counts; the probes fit the targets from *ground-truth* state features almost perfectly (the harness works); the random-init floor for every target.
 3. **Image baseline.** The Push-T image encoder per frame, probed on the last frames. Check: position close to `pusht`'s own quality; record velocity R².
 4. **Arm A: V-JEPA.** Masks, predictor, EMA, L1. Check first: mask coverage matches the targets (about 90% hidden, blocks through all frames); an untrained model's loss is finite and the EMA moves. Short run (about 20 minutes) for collapse (feature std) and loss trend, then a full run; probe it.
 5. **Arm B: LeVJEPA.** Views, token dropping, projector, SIGReg. Check: views are crops of the same clip; about 5% of tokens kept; SIGReg values on known samples (reuse `jepa_pathmnist/checks/check_lejepa.py`'s cases). Short run, then full; probe it.
@@ -64,3 +64,15 @@ Each step ends with a check that must pass before the next (`checks/`, as in `je
 - **Contact is geometric:** the pusher's centre within radius + 2 units of the T's two boxes (the simulator's add_tee, scale 30; pusher radius 15). 49% of frames; the T moves in 95% of contact frames and 4% of the others, so the label means what it says.
 - **Frames and state are aligned at lag 0:** the blue pusher's centroid in the 64 px frame matches the state at 0.19 px rms (lag −1: 1.35, +1: 2.85), scale 0.1248 px per unit (64/512 = 0.125).
 - **Clips:** 1,687,729 possible training clips from 17,751 episodes, 88,457 held-out from 934 (pusht's split). Probe sets are fixed seeded subsets (`Clips(..., n=, seed=)`); their sizes are set in step 2.
+- **Encoder:** width 192, depth 6, 3 heads, 8 px patches, 2.7 M parameters; V-JEPA's tubelets of 2 give 512 tokens, LeVJEPA's single frames 1,024. 3-D sin-cos positions (a third of the channels each for time, row, column). Pixels normalised with Push-T's own statistics (mean about 0.97: a white background), not ImageNet's.
+- **Speed on the Mac (MPS), forward + backward, batch 32:** 172 clips/s with all 512 tokens, 750 clips/s with 51 kept. A V-JEPA step (target forward on all tokens, context forward and backward on about 10%, predictor) should run at roughly 150-200 clips/s, so 2 hours is about one pass over the 1.69 M training clips.
+- **Probes** (`probes.py`): 8,000 training and 2,000 held-out clips (seeds 1, 2), fixed for every arm. Linear: ridge (weight 1) on the mean of the tokens. Attentive: one query, 4 heads, residual MLP, linear head; AdamW lr 1e-3, weight decay 0.05, 30 epochs, one-cycle schedule, MSE on standardised targets; one recipe, never tuned per encoder. Scored as R² on held-out clips, contact also as accuracy.
+- **The harness works** (`checks/check_probes.py`): on tokens holding each frame's true state, the attentive probe gets position 0.999, velocity 0.964 (it subtracts the last two frames through different heads) and contact 94% accurate; a linear probe on the last frame's state gets position 1.000 and velocity 0.09, as it should with one frame.
+- **The floor, random-init encoder** (two seeds; R², position / velocity / contact, contact accuracy):
+
+  | probe | seed 0 | seed 1 |
+  |---|---|---|
+  | linear (mean) | 0.55 / 0.14 / 0.22, 71% | 0.55 / 0.14 / 0.19, 70% |
+  | attentive | 0.59 / 0.22 / 0.25, 72% | 0.55 / 0.21 / 0.14, 66% |
+
+  A random encoder already gives the T's position (R² about 0.8) and the pusher's (about 0.7), but not the T's angle (0.1-0.3) or the pusher's velocity (0.1). The attentive probe's spread between seeds is up to 0.1 on contact, so differences smaller than that are not results.
