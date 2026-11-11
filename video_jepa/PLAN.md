@@ -2,7 +2,7 @@
 
 **Goal (the user, 2026-11-09):** understand V-JEPA, a JEPA on video, by building a small one end to end. Not a benchmark: the point is to see each mechanism work (or fail) at a size the Mac can train in hours.
 
-**Status: steps 1-2 done (2026-11-11); step 3 next.** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
+**Status: steps 1-3 done (2026-11-11); step 4 (V-JEPA) next.** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
 
 ## What the papers say
 
@@ -46,7 +46,7 @@ Each step ends with a check that must pass before the next (`checks/`, as in `je
 
 1. [x] **Clips and labels** (`data.py`, `checks/check_data.py`). A dataset of 16-frame clips from training episodes and a held-out one; probe targets (position, velocity, angular velocity, contact) from the state. Check: velocities from state differences match the recorded pusher velocity; a clip's frames are 2 steps apart; no held-out episode in training.
 2. [x] **Encoder and probes, untrained** (`model.py`, `probes.py`, `checks/check_model.py`, `checks/check_probes.py`). The ViT, the attentive and linear probes, the probe training loop. Check: shapes and token counts; the probes fit the targets from *ground-truth* state features almost perfectly (the harness works); the random-init floor for every target.
-3. **Image baseline.** The Push-T image encoder per frame, probed on the last frames. Check: position close to `pusht`'s own quality; record velocity R².
+3. [x] **Image baseline** (`baseline_image.py`). The Push-T image encoder per frame, probed on the last frames. Check: position close to `pusht`'s own quality; record velocity R².
 4. **Arm A: V-JEPA.** Masks, predictor, EMA, L1. Check first: mask coverage matches the targets (about 90% hidden, blocks through all frames); an untrained model's loss is finite and the EMA moves. Short run (about 20 minutes) for collapse (feature std) and loss trend, then a full run; probe it.
 5. **Arm B: LeVJEPA.** Views, token dropping, projector, SIGReg. Check: views are crops of the same clip; about 5% of tokens kept; SIGReg values on known samples (reuse `jepa_pathmnist/checks/check_lejepa.py`'s cases). Short run, then full; probe it.
 6. **Compare and conclude.** One table: floor, image baseline, V-JEPA, LeVJEPA, on position, velocity, contact; plus the cost of each run. Optional afterwards: plan Push-T with a frozen video encoder and an action-conditioned predictor (V-JEPA 2-AC style), against the image encoder's 35/50.
@@ -76,3 +76,12 @@ Each step ends with a check that must pass before the next (`checks/`, as in `je
   | attentive | 0.59 / 0.22 / 0.25, 72% | 0.55 / 0.21 / 0.14, 66% |
 
   A random encoder already gives the T's position (R² about 0.8) and the pusher's (about 0.7), but not the T's angle (0.1-0.3) or the pusher's velocity (0.1). The attentive probe's spread between seeds is up to 0.1 on contact, so differences smaller than that are not results.
+- **The image baseline** (`baseline_image.py`, the world model's encoder from `pusht/runs/sigreg-s0` on each frame; R², position / velocity / contact, contact accuracy):
+
+  | probe | position | velocity | contact | accuracy |
+  |---|---|---|---|---|
+  | linear, last frame | 0.73 | 0.21 | 0.61 | 89% |
+  | linear, last 3 frames | 0.74 | 0.67 | 0.63 | 90% |
+  | attentive, 16 frames | 0.84 | 0.75 | 0.69 | 92% |
+
+  x, y positions alone 0.94-0.95 (the check: > 0.85; my first check used the whole position group and failed on the T's angle, which this encoder holds only nonlinearly: sin, cos 0.3-0.4 linearly, 0.6-0.7 attentive). Velocity comes from comparing frames: 0.21 from one frame, 0.67 from three side by side; the T's angular velocity stays hard (0.13 linear, 0.67 attentive). This is a strong baseline: a trained encoder (1.6 M frames, action-conditioned prediction), so **the bar for the video encoders is velocity 0.67-0.75 and contact 90-92%**, against the random floor's 0.14-0.22 and 66-72%.
