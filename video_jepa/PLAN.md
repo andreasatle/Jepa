@@ -2,7 +2,7 @@
 
 **Goal (the user, 2026-11-09):** understand V-JEPA, a JEPA on video, by building a small one end to end. Not a benchmark: the point is to see each mechanism work (or fail) at a size the Mac can train in hours.
 
-**Status: planned, nothing built yet.**
+**Status: step 1 done (2026-11-11); step 2 next.** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
 
 ## What the papers say
 
@@ -44,7 +44,7 @@ Probes are fitted on frozen features of training episodes and scored (R²) on he
 
 Each step ends with a check that must pass before the next (`checks/`, as in `jepa_pathmnist`).
 
-1. **Clips and labels.** A dataset of 16-frame clips from training episodes and a held-out one; probe targets (position, velocity, angular velocity, contact) from the state. Check: velocities from state differences match the recorded pusher velocity; a clip's frames are 2 steps apart; no held-out episode in training.
+1. [x] **Clips and labels** (`data.py`, `checks/check_data.py`). A dataset of 16-frame clips from training episodes and a held-out one; probe targets (position, velocity, angular velocity, contact) from the state. Check: velocities from state differences match the recorded pusher velocity; a clip's frames are 2 steps apart; no held-out episode in training.
 2. **Encoder and probes, untrained.** The ViT, the attentive and linear probes, the probe training loop. Check: shapes and token counts; the probes fit the targets from *ground-truth* state features almost perfectly (the harness works); the random-init floor for every target.
 3. **Image baseline.** The Push-T image encoder per frame, probed on the last frames. Check: position close to `pusht`'s own quality; record velocity R².
 4. **Arm A: V-JEPA.** Masks, predictor, EMA, L1. Check first: mask coverage matches the targets (about 90% hidden, blocks through all frames); an untrained model's loss is finite and the EMA moves. Short run (about 20 minutes) for collapse (feature std) and loss trend, then a full run; probe it.
@@ -59,4 +59,8 @@ Each step ends with a check that must pass before the next (`checks/`, as in `je
 
 ## Decisions made during implementation
 
-(none yet)
+- **Order (the user, 2026-11-11):** V-JEPA first, LeVJEPA second. LeJEPA beat I-JEPA on PathMNIST, so the user expects LeVJEPA to be the one used in the end; the open question is velocity, which a view-invariance objective with crops and 95% token dropping may discard and V-JEPA's prediction of hidden space-time may keep.
+- **Velocity labels are differences over one clip step** (2 env steps, 0.2 s), in units per second, for the pusher and the T alike: what the clip's frames can show. The simulator's recorded pusher velocity is only a check: one-step differences track it at correlation 0.99 (recorded = 0.93 × difference; it is the end-of-step velocity under the PD controller), the two-step labels at 0.93.
+- **Contact is geometric:** the pusher's centre within radius + 2 units of the T's two boxes (the simulator's add_tee, scale 30; pusher radius 15). 49% of frames; the T moves in 95% of contact frames and 4% of the others, so the label means what it says.
+- **Frames and state are aligned at lag 0:** the blue pusher's centroid in the 64 px frame matches the state at 0.19 px rms (lag −1: 1.35, +1: 2.85), scale 0.1248 px per unit (64/512 = 0.125).
+- **Clips:** 1,687,729 possible training clips from 17,751 episodes, 88,457 held-out from 934 (pusht's split). Probe sets are fixed seeded subsets (`Clips(..., n=, seed=)`); their sizes are set in step 2.
