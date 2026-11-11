@@ -5,8 +5,10 @@ The video encoder shared by both arms (V-JEPA and LeVJEPA): a small ViT over spa
 
 Tokens are numbered time-major, then row, then column: index = (t * grid + row) * grid + col. Positions are
 fixed 3-D sin-cos vectors (a third of the channels each for time, row and column), added before any token is
-dropped, so a kept token always knows where and when it sits. `forward(clips, keep_idx)` runs only the tokens
-in keep_idx (B, K), which is how V-JEPA's context encoder sees the visible part and how LeVJEPA drops 95%.
+dropped, so a kept token always knows where and when it sits. `forward(clips, keep_idx, valid)` runs only the
+tokens in keep_idx (B, K), which is how V-JEPA's context encoder sees the visible part and how LeVJEPA drops 95%;
+`valid` (B, K) bool marks padding (False), which no token attends to, so a padded row's real outputs are exactly
+what they would be without the padding.
 
 Pixel normalisation uses Push-T's own statistics (mostly white background, mean about 0.97), measured on 4,000
 random frames; ImageNet's would leave the inputs far from zero mean and unit variance.
@@ -48,10 +50,11 @@ class Attention(nn.Module):
         self.qkv = nn.Linear(dim, 3 * dim)
         self.proj = nn.Linear(dim, dim)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, valid: torch.Tensor | None = None) -> torch.Tensor:
         B, N, D = x.shape
         q, k, v = self.qkv(x).reshape(B, N, 3, self.num_heads, self.head_dim).permute(2, 0, 3, 1, 4)
-        out = F.scaled_dot_product_attention(q, k, v)                     # (B, heads, N, head_dim)
+        mask = None if valid is None else valid[:, None, None, :]           # padded keys are never attended to
+        out = F.scaled_dot_product_attention(q, k, v, attn_mask=mask)      # (B, heads, N, head_dim)
         return self.proj(out.transpose(1, 2).reshape(B, N, D))
 
 
@@ -65,8 +68,8 @@ class Block(nn.Module):
         hidden = int(dim * mlp_ratio)
         self.mlp = nn.Sequential(nn.Linear(dim, hidden), nn.GELU(), nn.Linear(hidden, dim))
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = x + self.attn(self.norm1(x))
+    def forward(self, x: torch.Tensor, valid: torch.Tensor | None = None) -> torch.Tensor:
+        x = x + self.attn(self.norm1(x), valid)
         return x + self.mlp(self.norm2(x))
 
 
@@ -111,10 +114,11 @@ class VideoEncoder(nn.Module):
         x = self.patch_embed(x).flatten(2).transpose(1, 2)                    # B, N, D, time-major
         return x + self.pos_embed
 
-    def forward(self, clips: torch.Tensor, keep_idx: torch.Tensor | None = None) -> torch.Tensor:
+    def forward(self, clips: torch.Tensor, keep_idx: torch.Tensor | None = None,
+                valid: torch.Tensor | None = None) -> torch.Tensor:
         x = self.tokens(clips)
         if keep_idx is not None:                                              # (B, K): only these tokens
             x = torch.gather(x, 1, keep_idx[..., None].expand(-1, -1, self.dim))
         for blk in self.blocks:
-            x = blk(x)
+            x = blk(x, valid)
         return self.norm(x)
