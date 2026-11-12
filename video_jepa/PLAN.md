@@ -2,7 +2,7 @@
 
 **Goal (the user, 2026-11-09):** understand V-JEPA, a JEPA on video, by building a small one end to end. Not a benchmark: the point is to see each mechanism work (or fail) at a size the Mac can train in hours.
 
-**Status: steps 1-3 done (2026-11-11); step 4 (V-JEPA) next.** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
+**Status: steps 1-4 done (2026-11-11); step 5 (LeVJEPA) next.** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
 
 ## What the papers say
 
@@ -47,7 +47,7 @@ Each step ends with a check that must pass before the next (`checks/`, as in `je
 1. [x] **Clips and labels** (`data.py`, `checks/check_data.py`). A dataset of 16-frame clips from training episodes and a held-out one; probe targets (position, velocity, angular velocity, contact) from the state. Check: velocities from state differences match the recorded pusher velocity; a clip's frames are 2 steps apart; no held-out episode in training.
 2. [x] **Encoder and probes, untrained** (`model.py`, `probes.py`, `checks/check_model.py`, `checks/check_probes.py`). The ViT, the attentive and linear probes, the probe training loop. Check: shapes and token counts; the probes fit the targets from *ground-truth* state features almost perfectly (the harness works); the random-init floor for every target.
 3. [x] **Image baseline** (`baseline_image.py`). The Push-T image encoder per frame, probed on the last frames. Check: position close to `pusht`'s own quality; record velocity R².
-4. **Arm A: V-JEPA.** Masks, predictor, EMA, L1. Check first: mask coverage matches the targets (about 90% hidden, blocks through all frames); an untrained model's loss is finite and the EMA moves. Short run (about 20 minutes) for collapse (feature std) and loss trend, then a full run; probe it.
+4. [x] **Arm A: V-JEPA** (`masks.py`, `vjepa.py`, `checks/check_vjepa.py`; run `runs/vjepa-s0`). Masks, predictor, EMA, L1. Check first: mask coverage matches the targets (about 90% hidden, blocks through all frames); an untrained model's loss is finite and the EMA moves. Short run (about 20 minutes) for collapse (feature std) and loss trend, then a full run; probe it.
 5. **Arm B: LeVJEPA.** Views, token dropping, projector, SIGReg. Check: views are crops of the same clip; about 5% of tokens kept; SIGReg values on known samples (reuse `jepa_pathmnist/checks/check_lejepa.py`'s cases). Short run, then full; probe it.
 6. **Compare and conclude.** One table: floor, image baseline, V-JEPA, LeVJEPA, on position, velocity, contact; plus the cost of each run. Optional afterwards: plan Push-T with a frozen video encoder and an action-conditioned predictor (V-JEPA 2-AC style), against the image encoder's 35/50.
 
@@ -90,3 +90,14 @@ Each step ends with a check that must pass before the next (`checks/`, as in `je
 - **Short run** (`runs/short`, 1,500 steps, 25 min): loss 0.86 -> 0.09, no collapse (rank of pooled features 36 -> 23). Two findings before the full run:
   1. **Most of the loss is position.** Guessing each target token from its position alone gives L1 0.099; position explains 80% of the target features' variance at init (55% after the run), and 40% of tokens are pure white background. So the loss falling to 0.09 says little; content learning shows only in the probes.
   2. **The EMA target barely moved:** with momentum ramped 0.998 -> 1.0 over only 1,500 steps it stayed near its random init (content variance 15.5 -> 13.4), and its probes are at the floor (attentive position 0.53, velocity 0.10). The online encoder learned: content variance 15.5 -> 55.7, and its attentive probe gives position 0.66, velocity 0.40, contact 83% (floor 0.59 / 0.22 / 72%; image baseline 0.84 / 0.75 / 92%). So both encoders are probed from now on; V-JEPA's own evaluation reads the target encoder (to be confirmed in its code).
+- **Full run** (`runs/vjepa-s0`, 8,000 steps, 130 min, 512 k clips, about a third of one pass): the target encoder starts to move around step 1,400; from then the target features' spread across clips grows about 20-fold (0.02 -> 0.55) and the loss rises with it (0.08 -> 0.36, because the targets now carry content), both flat from step 4,000. The rank of the pooled features settles at 7-9: low, but Push-T's state has about that many numbers, and the spread never shrinks, so no collapse.
+- **V-JEPA's probes** (attentive; R², position / velocity / contact, accuracy). The linear probe on mean-pooled tokens stays at the floor for every encoder (0.55 / 0.15 / 0.13): averaging over all tokens, 40% of them background, keeps only the position code.
+
+  | encoder | position | velocity | contact | accuracy |
+  |---|---|---|---|---|
+  | random floor | 0.55-0.59 | 0.21-0.22 | 0.14-0.25 | 66-72% |
+  | V-JEPA, target (EMA) | 0.72 | 0.47 | 0.53 | 85% |
+  | V-JEPA, online | 0.74 | 0.50 | 0.55 | 85% |
+  | image baseline | 0.84 | 0.75 | 0.69 | 92% |
+
+  Per target, V-JEPA is closest to the image baseline on the T (velocity 0.61-0.67 vs 0.75-0.77, angular velocity 0.40-0.47 vs 0.67) and furthest on the pusher's velocity (0.31-0.37 vs 0.78). The pusher is a 4 px dot in a 64 px frame, half of an 8 px patch, and moves about 2 px between the two frames of a tubelet, so a tubelet token sees little of its motion; the image encoder's CNN has full resolution. V-JEPA learned velocity from video alone (0.21 -> 0.50) but stays below a per-frame image encoder trained with actions on a world-model task, at a third of an epoch. The online and target encoders are within the probe's noise of each other.
