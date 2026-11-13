@@ -90,11 +90,13 @@ def init_weights(model: nn.Module, blocks: nn.ModuleList, std: float = 0.02) -> 
 
 
 class VideoEncoder(nn.Module):
-    """Plain ViT over tubelets, no [CLS] token, no head (LeVJEPA's [cls] is added in its arm)."""
+    """Plain ViT over tubelets, no head. cls=True (LeVJEPA) prepends a learned [cls] token after the patch tokens
+    are chosen; it has no position and is output 0, so LeVJEPA reads the clip's embedding there."""
 
     def __init__(self, frames: int = 16, img_size: int = 64, patch: int = 8, tubelet: int = 2,
-                 dim: int = 192, depth: int = 6, heads: int = 3):
+                 dim: int = 192, depth: int = 6, heads: int = 3, cls: bool = False):
         super().__init__()
+        self.cls = nn.Parameter(torch.zeros(1, 1, dim)) if cls else None
         assert frames % tubelet == 0 and img_size % patch == 0
         self.t_grid, self.grid, self.dim = frames // tubelet, img_size // patch, dim
         self.num_tokens = self.t_grid * self.grid ** 2
@@ -106,6 +108,8 @@ class VideoEncoder(nn.Module):
         self.blocks = nn.ModuleList([Block(dim, heads) for _ in range(depth)])
         self.norm = nn.LayerNorm(dim)
         init_weights(self, self.blocks)
+        if self.cls is not None:
+            nn.init.trunc_normal_(self.cls, std=.02)
 
     def tokens(self, clips: torch.Tensor) -> torch.Tensor:
         """(B, T, 3, H, W) uint8 -> (B, N, D) embedded tubelets with positions, before the transformer."""
@@ -119,6 +123,10 @@ class VideoEncoder(nn.Module):
         x = self.tokens(clips)
         if keep_idx is not None:                                              # (B, K): only these tokens
             x = torch.gather(x, 1, keep_idx[..., None].expand(-1, -1, self.dim))
+        if self.cls is not None:
+            x = torch.cat([self.cls.expand(len(x), -1, -1), x], 1)
+            if valid is not None:
+                valid = torch.cat([valid.new_ones(len(x), 1), valid], 1)
         for blk in self.blocks:
             x = blk(x, valid)
         return self.norm(x)
