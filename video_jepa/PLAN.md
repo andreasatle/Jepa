@@ -2,7 +2,7 @@
 
 **Goal (the user, 2026-11-09):** understand V-JEPA, a JEPA on video, by building a small one end to end. Not a benchmark: the point is to see each mechanism work (or fail) at a size the Mac can train in hours.
 
-**Status: steps 1-5 done (2026-11-12); step 6 (compare, delete one arm) next.** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
+**Status: steps 1-5 done (2026-11-12); step 6 (compare) next.** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
 
 ## What the papers say
 
@@ -49,7 +49,7 @@ Each step ends with a check that must pass before the next (`checks/`, as in `je
 3. [x] **Image baseline** (`baseline_image.py`). The Push-T image encoder per frame, probed on the last frames. Check: position close to `pusht`'s own quality; record velocity R².
 4. [x] **Arm A: V-JEPA** (`masks.py`, `vjepa.py`, `checks/check_vjepa.py`; run `runs/vjepa-s0`). Masks, predictor, EMA, L1. Check first: mask coverage matches the targets (about 90% hidden, blocks through all frames); an untrained model's loss is finite and the EMA moves. Short run (about 20 minutes) for collapse (feature std) and loss trend, then a full run; probe it.
 5. [x] **Arm B: LeVJEPA.** Views, token dropping, projector, SIGReg. Check: views are crops of the same clip; about 5% of tokens kept; SIGReg values on known samples (reuse `jepa_pathmnist/checks/check_lejepa.py`'s cases). Short run, then full; probe it.
-6. **Compare and conclude.** One table: floor, image baseline, V-JEPA, LeVJEPA, on position, velocity, contact; plus the cost of each run. **Then one arm is deleted** (rule agreed with the user, 2026-11-12, for lean code): LeVJEPA is kept if it is at least as good as V-JEPA on velocity and contact (attentive probe, within the spread of the two probe seeds), since it is the simpler recipe (no EMA target, no predictor, no masks) and the one the user expects to use; V-JEPA is kept only if it is better beyond that spread. The loser's files go in the commit that records the conclusion (V-JEPA: `vjepa.py`, `masks.py`, `checks/check_vjepa.py`, and the `valid` padding in `model.py` that only its masks need; LeVJEPA: its own files), its numbers stay in this plan and its code in git history. `baseline_image.py` stays only while a later step compares against it. Optional afterwards: plan Push-T with a frozen video encoder and an action-conditioned predictor (V-JEPA 2-AC style), against the image encoder's 35/50.
+6. **Compare and conclude.** One table: floor, image baseline, V-JEPA, LeVJEPA, on position, velocity, contact; plus the cost of each run. Both arms' code stays (the user, 2026-11-13: the lean-code rule is for AgentSwarm, not this research project). Optional afterwards: plan Push-T with a frozen video encoder and an action-conditioned predictor (V-JEPA 2-AC style), against the image encoder's 35/50.
 
 ## Risks and what would change the plan
 
