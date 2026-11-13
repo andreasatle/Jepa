@@ -139,7 +139,7 @@ def probe_sets(video: PushTVideo) -> tuple[Clips, Clips]:
     return Clips(video, "train", n=N_TRAIN, seed=1), Clips(video, "held_out", n=N_EVAL, seed=2)
 
 
-def run(encoder: nn.Module, label: str, dev: torch.device) -> list[dict]:
+def run(encoder: nn.Module, label: str, dev: torch.device, probe_seed: int = 0) -> list[dict]:
     tr, ev = probe_sets(PushTVideo())
     t0 = time.time()
     ttr, tev = embed(encoder, tr, dev), embed(encoder, ev, dev)
@@ -147,7 +147,8 @@ def run(encoder: nn.Module, label: str, dev: torch.device) -> list[dict]:
     ytr, yev = torch.from_numpy(tr.targets), torch.from_numpy(ev.targets)
     rows = [summarise(f"{label} linear (mean)", linear_probe(ttr.float().mean(1), ytr, tev.float().mean(1)), yev)]
     t0 = time.time()
-    rows.append(summarise(f"{label} attentive", attentive_probe(ttr, ytr, tev, dev), yev))
+    rows.append(summarise(f"{label} attentive" + (f" p{probe_seed}" if probe_seed else ""),
+                         attentive_probe(ttr, ytr, tev, dev, seed=probe_seed), yev))
     print(f"attentive probe trained in {time.time() - t0:.0f} s")
     return rows
 
@@ -157,6 +158,7 @@ def main():
     ap.add_argument("--encoder", help="a checkpoint with the encoder's state_dict under 'encoder'")
     ap.add_argument("--random", action="store_true", help="random-init encoder of the same config: the floor")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--probe-seed", type=int, default=0, help="the attentive probe's init and data order")
     args = ap.parse_args()
     torch.manual_seed(args.seed)
     if args.random:
@@ -166,7 +168,7 @@ def main():
         encoder = VideoEncoder(**ck.get("config", {}))
         encoder.load_state_dict(ck["encoder"])
         label = os.path.basename(os.path.dirname(args.encoder))
-    rows = run(encoder, label, device())
+    rows = run(encoder, label, device(), args.probe_seed)
     print_rows(rows)
     path = os.path.join(HERE, "probes_results.csv")
     new = not os.path.exists(path)
