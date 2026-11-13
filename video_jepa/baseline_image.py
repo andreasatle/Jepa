@@ -15,6 +15,7 @@ used, in eval mode (BatchNorm on running statistics).
     uv run python baseline_image.py
 """
 
+import argparse
 import os
 import sys
 import time
@@ -50,6 +51,9 @@ def frame_embeddings(enc: PushTEncoder, video: PushTVideo, ends: np.ndarray, dev
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--probe-seed", type=int, default=0, help="the attentive probe's init and data order")
+    seed = ap.parse_args().probe_seed
     dev = device()
     enc = PushTEncoder()
     enc.load_state_dict(torch.load(CHECKPOINT, map_location="cpu")["E"])
@@ -65,8 +69,8 @@ def main():
             summarise("image, linear (last 3)", linear_probe(ftr[:, -3:].flatten(1), ytr, fev[:, -3:].flatten(1)), yev)]
     code = sincos_1d(ftr.shape[-1], torch.arange(FRAMES))[None]                # time of each frame
     scale = ftr.std()
-    rows.append(summarise("image, attentive (16 frames)",
-                          attentive_probe((ftr / scale + code).half(), ytr, (fev / scale + code).half(), dev), yev))
+    rows.append(summarise("image, attentive (16 frames)" + (f" p{seed}" if seed else ""),
+                          attentive_probe((ftr / scale + code).half(), ytr, (fev / scale + code).half(), dev, seed=seed), yev))
     print_rows(rows)
     xy = ["pusher_x", "pusher_y", "t_x", "t_y"]
     print("x, y positions only (R^2): " + ", ".join(f"{r['probe']} {np.mean([r[t] for t in xy]):.3f}" for r in rows))

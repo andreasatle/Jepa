@@ -2,7 +2,7 @@
 
 **Goal (the user, 2026-11-09):** understand V-JEPA, a JEPA on video, by building a small one end to end. Not a benchmark: the point is to see each mechanism work (or fail) at a size the Mac can train in hours.
 
-**Status: steps 1-5 done (2026-11-12); step 6 (compare) next.** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
+**Status: steps 1-6 done (2026-11-13).** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
 
 ## What the papers say
 
@@ -49,7 +49,7 @@ Each step ends with a check that must pass before the next (`checks/`, as in `je
 3. [x] **Image baseline** (`baseline_image.py`). The Push-T image encoder per frame, probed on the last frames. Check: position close to `pusht`'s own quality; record velocity R².
 4. [x] **Arm A: V-JEPA** (`masks.py`, `vjepa.py`, `checks/check_vjepa.py`; run `runs/vjepa-s0`). Masks, predictor, EMA, L1. Check first: mask coverage matches the targets (about 90% hidden, blocks through all frames); an untrained model's loss is finite and the EMA moves. Short run (about 20 minutes) for collapse (feature std) and loss trend, then a full run; probe it.
 5. [x] **Arm B: LeVJEPA.** Views, token dropping, projector, SIGReg. Check: views are crops of the same clip; about 5% of tokens kept; SIGReg values on known samples (reuse `jepa_pathmnist/checks/check_lejepa.py`'s cases). Short run, then full; probe it.
-6. **Compare and conclude.** One table: floor, image baseline, V-JEPA, LeVJEPA, on position, velocity, contact; plus the cost of each run. Both arms' code stays (the user, 2026-11-13: the lean-code rule is for AgentSwarm, not this research project). Optional afterwards: plan Push-T with a frozen video encoder and an action-conditioned predictor (V-JEPA 2-AC style), against the image encoder's 35/50.
+6. [x] **Compare and conclude.** One table: floor, image baseline, V-JEPA, LeVJEPA, on position, velocity, contact; plus the cost of each run. Both arms' code stays (the user, 2026-11-13: the lean-code rule is for AgentSwarm, not this research project). Optional afterwards: plan Push-T with a frozen video encoder and an action-conditioned predictor (V-JEPA 2-AC style), against the image encoder's 35/50.
 
 ## Risks and what would change the plan
 
@@ -115,4 +115,23 @@ Each step ends with a check that must pass before the next (`checks/`, as in `je
   | LeVJEPA | 0.84-0.87 | 0.40-0.48 | 0.38-0.53 | 78-84% |
 
   The probe alone moves velocity by up to 0.08 and contact by up to 0.15 between seeds, more than the step-2 floor suggested. LeVJEPA is better on position beyond the spread (+0.1, the T's angle 0.72-0.78 vs 0.55-0.65); on velocity and contact its ranges overlap V-JEPA's, but its means are lower (velocity 0.43 vs 0.47-0.50; contact 0.43 vs 0.54-0.55; accuracy 80% vs 85%). Per target, LeVJEPA trails on the pusher's velocity (0.20-0.29 vs 0.30-0.41) and matches on the T's angular velocity (0.45-0.55 vs 0.35-0.47).
+
+## Conclusion (step 6, 2026-11-13)
+
+Attentive probe on frozen features, three probe seeds (0, 1, 2) each, held-out episodes; R², ranges over the seeds. `probes.py --probe-seed` and `baseline_image.py --probe-seed`.
+
+| encoder | position | velocity | contact | contact accuracy | training |
+|---|---|---|---|---|---|
+| random init (the floor) | 0.56-0.60 | 0.22-0.25 | 0.23-0.27 | 71-73% | none |
+| V-JEPA, target (EMA) | 0.71-0.72 | 0.43-0.51 | 0.50-0.59 | 83-86% | 130 min, 512 k clips (69 clips/s) |
+| V-JEPA, online | 0.73-0.75 | 0.46-0.54 | 0.54-0.56 | 84-86% | the same run |
+| LeVJEPA | 0.84-0.87 | 0.40-0.48 | 0.38-0.53 | 78-84% | 122 min, 1.15 M clips (158 clips/s) |
+| image baseline (`../pusht` world model's encoder, per frame) | 0.84 | 0.75-0.77 | 0.68-0.69 | 91-92% | 67 min, 3.8 M windows of 4 frames, with actions |
+
+1. **Both video objectives learn motion from video alone**, well above the floor (velocity 0.22 -> 0.4-0.5), without actions or labels.
+2. **Neither reaches the image baseline on motion.** A per-frame encoder trained as a world model (it predicts the next frame's embedding from the action, so it must track the pusher and the T exactly) gives velocity 0.75 and contact 92% when the probe compares its frames. The video encoders' weak point is the pusher's velocity (0.20-0.41 vs 0.78): a 4 px dot in an 8 px patch.
+3. **LeVJEPA against V-JEPA, at equal time:** LeVJEPA is better on position beyond the probe's spread (0.84-0.87 vs 0.71-0.75; the T's angle most of all), level on the T's angular velocity, and lower on average on velocity (0.43 vs 0.47-0.50) and contact (80% vs 85%), with overlapping ranges. It is the simpler recipe (no EMA target, no predictor, no masks) and twice as fast per clip, but slower to start: its short run (1,500 steps) learned no velocity at all, where V-JEPA's had 0.40.
+4. **The probe is a noisy instrument on the video encoders:** its seed alone moves velocity by up to 0.08 and contact by up to 0.15, against 0.02 for the image baseline. Differences between the two video arms smaller than that are not results; one training seed per arm is a further limit.
+
+Both arms' code stays. Next, if wanted: the optional planning step (frozen video encoder + action-conditioned predictor, against the image encoder's 35/50), or a second training seed per arm to separate them on velocity and contact.
 
