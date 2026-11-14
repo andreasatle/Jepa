@@ -26,19 +26,27 @@ OUT = os.path.join(HERE, "runs", "video")
 
 
 class Recorder:
-    """The simulator, with every frame after a reset or a step kept (rendered at the env's resolution)."""
+    """The simulator, with every frame after a reset or a step kept (rendered at the env's resolution), and
+    the exact state behind it: the pusher's centre and the T's 8 corners, in the simulator's 512-pixel frame,
+    from which the panels are drawn smooth at any size."""
 
     def __init__(self, env):
-        self.env, self.frames = env, []
+        self.env, self.frames, self.states = env, [], []
+
+    def keep(self) -> None:
+        self.frames.append(self.env.render())
+        agent, block = self.env.agent, self.env.block
+        corners = [c for v in TEE for c in block.local_to_world(v)]  # exact, as the simulator places them
+        self.states.append([*agent.position, *corners])
 
     def reset(self, **kw):
         out = self.env.reset(**kw)
-        self.frames.append(self.env.render())
+        self.keep()
         return out
 
     def step(self, action):
         out = self.env.step(action)
-        self.frames.append(self.env.render())
+        self.keep()
         return out
 
     def render(self):
@@ -79,6 +87,9 @@ def record(planner: str, trial: int) -> None:
         s, g = ev.starts(meta)[trial]
         ok = ev.run_episode(env, "model", s, g, meta, frames, p, trial)
     np.save(os.path.join(OUT, f"{planner}-{trial}.npy"), np.stack(env.frames))
+    np.save(os.path.join(OUT, f"{planner}-{trial}-states.npy"), np.array(env.states))
+    radius = next(s.radius for s in env.env.agent.shapes)
+    np.save(os.path.join(OUT, "pusher-radius.npy"), np.array(radius))
     goal = meta["state"][g].astype(np.float64)  # the puzzle's goal: the expert's state 25 steps on
     env.env.reset(seed=trial, options={"state": goal, "goal_state": goal})
     np.save(os.path.join(OUT, f"goal-{trial}.npy"), env.env.render())
@@ -206,9 +217,76 @@ def gif(frames: str, out: str, fps: int, colours: int = 8) -> None:
                     "-loop", "0", out], check=True)
 
 
+def svg(trial: int, out: str, fps: int = 10, hold: float = 1.5) -> None:
+    """The two planners side by side as an animated SVG (SMIL, no script, so it runs in an <img>): the T and
+    the pusher drawn from each step's exact state, moving smoothly between steps, the goal T outlined; each
+    panel shows its result at the end, held `hold` seconds, then it loops. A few kilobytes, sharp at any size."""
+    runs = {p: np.load(os.path.join(OUT, f"{p}-{trial}-states.npy")) for p in ("tokens", "world")}
+    ends = {p: open(os.path.join(OUT, f"{p}-{trial}.txt")).read() for p in runs}
+    goal = np.load(os.path.join(OUT, f"goal-tee-{trial}.npy"))
+    radius = float(np.load(os.path.join(OUT, "pusher-radius.npy")))
+    steps = max(len(v) for v in runs.values())
+    total = (steps - 1) / fps + hold
+
+    # the square of the 512-pixel table that holds everything, the goal included
+    xs = np.concatenate([goal[:, 0], *[v[:, 2::2].ravel() for v in runs.values()],
+                         *[v[:, 0] + d for v in runs.values() for d in (-radius, radius)]])
+    ys = np.concatenate([goal[:, 1], *[v[:, 3::2].ravel() for v in runs.values()],
+                         *[v[:, 1] + d for v in runs.values() for d in (-radius, radius)]])
+    side = max(xs.max() - xs.min(), ys.max() - ys.min()) + 40
+    x0, y0 = (xs.min() + xs.max() - side) / 2, (ys.min() + ys.max() - side) / 2
+
+    size, bar, gap = 320, 46, 10
+    times = [min(i / fps, (steps - 1) / fps) / total for i in range(steps)] + [1.0]
+    key_times = ";".join(f"{t:.4f}" for t in times)
+    titles = {"tokens": "Video encoder, frozen", "world": "World model, trained with actions"}
+
+    def pts(row: np.ndarray) -> str:
+        return " ".join(f"{x:.1f},{y:.1f}" for x, y in row.reshape(-1, 2))
+
+    panels = []
+    for k, (name, states) in enumerate(runs.items()):
+        padded = np.concatenate([states, np.repeat(states[-1:], steps + 1 - len(states), 0)])
+        t_values = ";".join(pts(r[2:]) for r in padded)
+        cx = ";".join(f"{r[0]:.1f}" for r in padded)
+        cy = ";".join(f"{r[1]:.1f}" for r in padded)
+        done = (len(states) - 1) / fps / total
+        n = len(states) - 1
+        result = f"solved in {n} steps" if ends[name] == "solved" else f"not solved in {n} steps"
+        colour = "#2f7d4f" if ends[name] == "solved" else "#a33a3a"
+        scale = size / side
+        panels.append(f"""
+  <g transform="translate({k * (size + gap)},0)">
+    <text x="6" y="18" class="title">{titles[name]}</text>
+    <text x="6" y="38" class="note" fill="{colour}" opacity="0">{result}<animate attributeName="opacity"
+      values="0;1;1" keyTimes="0;{done:.4f};1" dur="{total:.2f}s" calcMode="discrete" repeatCount="indefinite"/></text>
+    <svg x="0" y="{bar}" width="{size}" height="{size}" viewBox="{x0:.1f} {y0:.1f} {side:.1f} {side:.1f}">
+      <rect x="{x0:.1f}" y="{y0:.1f}" width="{side:.1f}" height="{side:.1f}" fill="#fff"/>
+      <polygon points="{pts(padded[0][2:])}" fill="#8fa3b8" stroke="#6f8399" stroke-width="{1.2 / scale:.2f}"
+        stroke-linejoin="round"><animate attributeName="points" values="{t_values}" keyTimes="{key_times}"
+        dur="{total:.2f}s" repeatCount="indefinite"/></polygon>
+      <circle cx="{padded[0][0]:.1f}" cy="{padded[0][1]:.1f}" r="{radius:.1f}" fill="#4e7eff">
+        <animate attributeName="cx" values="{cx}" keyTimes="{key_times}" dur="{total:.2f}s" repeatCount="indefinite"/>
+        <animate attributeName="cy" values="{cy}" keyTimes="{key_times}" dur="{total:.2f}s" repeatCount="indefinite"/>
+      </circle>
+      <polygon points="{pts(goal)}" fill="none" stroke="#222" stroke-width="{2 / scale:.2f}" stroke-linejoin="miter"/>
+    </svg>
+    <rect x="0.5" y="{bar + 0.5}" width="{size - 1}" height="{size - 1}" fill="none" stroke="#d7d7d7"/>
+  </g>""")
+    width, height = 2 * size + gap, bar + size
+    doc = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">
+  <style>.title{{font:14px system-ui,-apple-system,sans-serif;fill:#282828}}.note{{font:12px system-ui,-apple-system,sans-serif}}</style>
+  <rect width="{width}" height="{height}" fill="#fff"/>{"".join(panels)}
+</svg>
+"""
+    with open(out, "w") as f:
+        f.write(doc)
+    print(f"{out}: {len(doc) / 1024:.1f} KB, {total:.1f} s a loop")
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("command", choices=["record", "goal", "compose"])
+    ap.add_argument("command", choices=["record", "goal", "compose", "svg"])
     ap.add_argument("--planner", choices=["tokens", "world"])
     ap.add_argument("--trial", type=int, default=0)
     ap.add_argument("--out", default=os.path.join(OUT, "pusht-side-by-side.mp4"))
@@ -217,6 +295,8 @@ def main():
         record(args.planner, args.trial)
     elif args.command == "goal":
         goal_tee(args.trial)
+    elif args.command == "svg":
+        svg(args.trial, args.out.rsplit(".", 1)[0] + ".svg")
     else:
         compose(args.trial, args.out)
 
