@@ -2,7 +2,7 @@
 
 **Goal (the user, 2026-11-09):** understand V-JEPA, a JEPA on video, by building a small one end to end. Not a benchmark: the point is to see each mechanism work (or fail) at a size the Mac can train in hours.
 
-**Status: steps 1-6 done (2026-11-13).** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
+**Status: steps 1-6 done (2026-11-13); step 7 (planning) first result (2026-11-14).** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
 
 ## What the papers say
 
@@ -50,6 +50,7 @@ Each step ends with a check that must pass before the next (`checks/`, as in `je
 4. [x] **Arm A: V-JEPA** (`masks.py`, `vjepa.py`, `checks/check_vjepa.py`; run `runs/vjepa-s0`). Masks, predictor, EMA, L1. Check first: mask coverage matches the targets (about 90% hidden, blocks through all frames); an untrained model's loss is finite and the EMA moves. Short run (about 20 minutes) for collapse (feature std) and loss trend, then a full run; probe it.
 5. [x] **Arm B: LeVJEPA.** Views, token dropping, projector, SIGReg. Check: views are crops of the same clip; about 5% of tokens kept; SIGReg values on known samples (reuse `jepa_pathmnist/checks/check_lejepa.py`'s cases). Short run, then full; probe it.
 6. [x] **Compare and conclude.** One table: floor, image baseline, V-JEPA, LeVJEPA, on position, velocity, contact; plus the cost of each run. Both arms' code stays (the user, 2026-11-13: the lean-code rule is for AgentSwarm, not this research project). Optional afterwards: plan Push-T with a frozen video encoder and an action-conditioned predictor (V-JEPA 2-AC style), against the image encoder's 35/50.
+7. **Planning with the frozen video encoder** (the user, 2026-11-14; V-JEPA 2-AC's recipe at our scale). The LeVJEPA encoder stays frozen; each moment is its [cls] embedding, standardised per dimension with training statistics. An action-conditioned predictor (pusht's: a causal transformer over up to 3 embeddings, each plus its 5-step action block's embedding, here with a LayerNorm head instead of BatchNorm) is trained on those embeddings with teacher forcing and MSE; no regulariser, since a frozen encoder can't collapse. Planning is pusht's exactly: LeWM's CEM (300 samples, 30 iterations, top 30, horizon 5 blocks of 5 steps), cost the squared distance to the goal's embedding, the same 50 puzzles from held-out episodes, 50 steps allowed. Two ways to embed a moment, both measured: **still** (the frame repeated 16 times: V-JEPA 2-AC encodes frames one at a time) and **clip** (the 16 frames 2 steps apart ending there, so the state carries motion; before the start, the episode's recorded frames, then the simulator's renders; the goal is the clip ending at the goal frame). Embedded for training: every 5th frame of the training episodes (about 460 k, about 25 minutes each). Bar: the image world model's 35-39 of 50 (pusht, SIGReg); floor 1 (random actions), ceiling 50 (the expert). Check before the long runs: the predictor's one-step error beats copying the last embedding.
 
 ## Risks and what would change the plan
 
@@ -134,4 +135,19 @@ Attentive probe on frozen features, three probe seeds (0, 1, 2) each, held-out e
 4. **The probe is a noisy instrument on the video encoders:** its seed alone moves velocity by up to 0.08 and contact by up to 0.15, against 0.02 for the image baseline. Differences between the two video arms smaller than that are not results; one training seed per arm is a further limit.
 
 Both arms' code stays. Next, if wanted: the optional planning step (frozen video encoder + action-conditioned predictor, against the image encoder's 35/50), or a second training seed per arm to separate them on velocity and contact.
+
+## Step 7, planning with the frozen video encoder (2026-11-14)
+
+`plan_ac.py`: 450,850 moments embedded per arm (every 5th frame of the training episodes, 25 min each at 304 clips/s); predictor trained 20,000 steps (3.6 min); the same 50 puzzles and CEM as `../pusht/evaluate.py`.
+
+| planner | solved of 50 | predictor's next-moment error (copying the last moment) |
+|---|---|---|
+| random actions (floor) | 1 | |
+| LeVJEPA [cls], still frames | 4 | 0.014 (0.080) |
+| LeVJEPA [cls], clips | 5 | 0.0019 (0.029) |
+| image world model (`../pusht`, SIGReg 0.09), rerun today as a control | 35 | |
+
+The harness is not the cause: the control, run the same day with pusht's own code, solves its 35 again, and both predictors beat copying the last moment five- to fifteenfold. The embedding is: across 3,000 random pairs of held-out states, the rank correlation between embedding distance and true state distance (pusher and T position, T angle) is 0.60 (still) and 0.52 (clip), but among the closest 10% of pairs only 0.37 and 0.34. The image world model's encoder is the opposite: 0.18 overall, 0.49 among the closest. Planning to a goal 2.5 pixels wide needs the local precision. A plausible reason: the action-conditioned world model is trained to tell apart states that differ by one push, while LeVJEPA's crop invariance rewards what a crop and the whole clip share (where things roughly are), not small differences.
+
+A departure that may matter: V-JEPA 2-AC plans over the encoder's patch tokens, not one pooled vector; using the [cls] alone throws away the spatial detail the probes found in the tokens (attentive position 0.84 against 0.61 linear on the [cls] in the short run). The fair next test is a token-level predictor (for example the 64 tokens of the last frame, or a 4 x 4 pooled grid to keep the stored embeddings near 3 GB).
 
