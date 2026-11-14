@@ -87,11 +87,32 @@ def record(planner: str, trial: int) -> None:
     print(f"{planner}, trial {trial}: {'SOLVED' if ok else 'not solved'} in {len(env.frames) - 1} steps")
 
 
+TEE = [(-60, 0), (60, 0), (60, 30), (15, 30), (15, 120), (-15, 120), (-15, 30), (-60, 30)]  # the T's outline
+# in its body's frame: the simulator's two boxes (add_tee, scale 30, length 4) as one shape
+
+
+def goal_tee(trial: int) -> None:
+    """The goal T's outline in the simulator's 512-pixel frame: its exact corners, put where the simulator
+    puts them (the block's body at the goal state, local_to_world), so the outline is drawn straight."""
+    import gymnasium as gym
+    import stable_worldmodel  # noqa: F401
+    from plan_ac import starts
+
+    meta = dict(np.load(os.path.join(PUSHT, "data", "meta.npz")))
+    _, g = starts(meta)[trial]
+    goal = meta["state"][g].astype(np.float64)
+    env = gym.make("swm/PushT-v1", resolution=224).unwrapped
+    env.reset(seed=trial, options={"state": goal, "goal_state": goal})
+    corners = np.array([tuple(env.block.local_to_world(v)) for v in TEE])
+    np.save(os.path.join(OUT, f"goal-tee-{trial}.npy"), corners)
+    print(f"goal T of trial {trial}: {corners.round(1).tolist()}")
+
+
 def label(
     frame: np.ndarray, title: str, note: str, outline: list[np.ndarray], size: int = 320, bar_height: int = 46
 ) -> np.ndarray:
     img = cv2.resize(frame, (size, size), interpolation=cv2.INTER_AREA)
-    cv2.polylines(img, outline, True, OUTLINE, 2, cv2.LINE_AA)
+    cv2.polylines(img, outline, True, OUTLINE, 2, cv2.LINE_AA, shift=4)
     cv2.rectangle(img, (0, 0), (size - 1, size - 1), (215, 215, 215), 1)
     bar = np.full((bar_height, size, 3), 255, np.uint8)
     cv2.putText(bar, title, (6, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (40, 40, 40), 1, cv2.LINE_AA)
@@ -112,19 +133,12 @@ def staged(frame: np.ndarray) -> np.ndarray:
     return img
 
 
-def goal_outline(goal: np.ndarray, box: tuple[int, int, int], size: int) -> list[np.ndarray]:
-    """The puzzle's goal (the T where the expert had it 25 steps later) as a clean polygon in panel pixels:
-    the T's pixels in the goal frame, cropped and enlarged as the panels are, then simplified, so the line
-    is drawn smooth at the final size instead of traced from small, anti-aliased pixels."""
-    c = staged(goal).astype(int)
-    blue = c[..., 2] > c[..., 0] + 60
-    mask = ((np.abs(c - 255).sum(-1) > 60) & ~blue).astype(np.float32)
-    mask[:8], mask[-8:], mask[:, :8], mask[:, -8:] = 0, 0, 0, 0  # the frame's own border
-    big = cv2.resize(crop(mask, box), (size, size), interpolation=cv2.INTER_LINEAR) > 0.5
-    big = cv2.morphologyEx(big.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))  # joins the bars
-    contours, _ = cv2.findContours(big, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    contours = [c for c in contours if cv2.contourArea(c) > 200]
-    return [cv2.approxPolyDP(c, 0.018 * cv2.arcLength(c, True), True) for c in contours]  # straight edges
+def goal_outline(corners: np.ndarray, box: tuple[int, int, int], render: int, size: int) -> list[np.ndarray]:
+    """The goal T's corners (simulator pixels, 512 a side) in panel pixels: scaled to the rendered frame,
+    cropped as the panels are, enlarged to the panel's size."""
+    top, left, side = box
+    points = (corners * render / 512 - [left, top]) * size / side
+    return [np.round(points * 16).astype(np.int32).reshape(-1, 1, 2)]  # 4 bits of subpixel precision
 
 
 def window(frames: list[np.ndarray], margin: int = 12) -> tuple[int, int, int]:
@@ -158,7 +172,7 @@ def compose(trial: int, out: str, fps: int = 10) -> None:
         os.remove(os.path.join(tmp, old))
     gap = np.full((366, 10, 3), 255, np.uint8)
     box = window([staged(f) for f in (*left, *right, goal)])
-    outline = goal_outline(goal, box, 320)
+    outline = goal_outline(np.load(os.path.join(OUT, f"goal-tee-{trial}.npy")), box, goal.shape[0], 320)
     for i in range(n):
         l, r = left[min(i, len(left) - 1)], right[min(i, len(right) - 1)]
         lnote = f"step {min(i, len(left) - 1)}" + (f"  ({lend})" if i >= len(left) - 1 else "")
@@ -194,13 +208,15 @@ def gif(frames: str, out: str, fps: int, colours: int = 8) -> None:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("command", choices=["record", "compose"])
+    ap.add_argument("command", choices=["record", "goal", "compose"])
     ap.add_argument("--planner", choices=["tokens", "world"])
     ap.add_argument("--trial", type=int, default=0)
     ap.add_argument("--out", default=os.path.join(OUT, "pusht-side-by-side.mp4"))
     args = ap.parse_args()
     if args.command == "record":
         record(args.planner, args.trial)
+    elif args.command == "goal":
+        goal_tee(args.trial)
     else:
         compose(args.trial, args.out)
 
