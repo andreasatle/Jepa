@@ -30,20 +30,30 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from data import PushTVideo
+from model import VideoEncoder
 from plan_ac import (ACTION_DIM, FRAMESKIP, HISTORY, HORIZON, ITERS, N_EVAL,
                      SAMPLES, TOPK, ClipRows, Encoder, Moments, action_stats, device, load_actions,
                      run_episode, starts)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "runs", "ac-tokens")
+OUT = os.path.join(HERE, "runs", "ac-tokens")  # --name changes it: runs/<name>
+ENCODER_PATH = os.path.join(HERE, "runs", "levjepa-s0", "encoder.pt")  # --encoder changes it
 GRID, POOLED, DIM = 8, 4, 192
 TOKENS = POOLED * POOLED
 
 
 class TokenEncoder(Encoder):
-    """The frozen LeVJEPA encoder: still clips (B, 16, 64, 64, 3) uint8 -> the last frame's tokens pooled to a
-    4 x 4 grid, (B, 16, 192). Tokens are numbered time-major after the [cls] (model.py), so the last frame's
-    64 are the last 64."""
+    def __init__(self, dev: torch.device):
+        ck = torch.load(ENCODER_PATH, map_location="cpu")
+        self.net = VideoEncoder(**ck["config"])
+        self.net.load_state_dict(ck["encoder"])  # V-JEPA's checkpoint holds its target (EMA) encoder here
+        self.net.eval().to(dev)
+        self.dev = dev
+
+    """A frozen video encoder (LeVJEPA by default, or --encoder): still clips (B, 16, 64, 64, 3) uint8 -> the
+    last time slot's tokens pooled to a 4 x 4 grid, (B, 16, 192). Tokens are numbered time-major, after the
+    [cls] when there is one (model.py), so the last time slot's 64 are the last 64: LeVJEPA's last frame,
+    V-JEPA's last tubelet of two frames (the same frame, in a still clip)."""
 
     @torch.no_grad()
     def __call__(self, clips: np.ndarray | torch.Tensor) -> torch.Tensor:
@@ -218,14 +228,20 @@ def evaluate() -> None:
     for trial, (s, g) in enumerate(starts(meta)):
         wins.append(run_episode(env, planner, video, meta, s, g, trial))
         print(f"trial {trial:2d}: {'SOLVED' if wins[-1] else 'not solved'}  ({time.time() - t0:.0f}s)", flush=True)
-    print(f"success rate: {sum(wins)}/{N_EVAL}  (LeVJEPA, 4 x 4 tokens)")
+    print(f"success rate: {sum(wins)}/{N_EVAL}  ({os.path.relpath(ENCODER_PATH, HERE)}, 4 x 4 tokens)")
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("command", choices=["embed", "train", "evaluate"])
     ap.add_argument("--steps", type=int, default=20_000)
+    ap.add_argument("--encoder", help="a video encoder checkpoint (default: runs/levjepa-s0/encoder.pt)")
+    ap.add_argument("--name", default="ac-tokens", help="the run's folder under runs/")
     args = ap.parse_args()
+    global OUT, ENCODER_PATH
+    OUT = os.path.join(HERE, "runs", args.name)
+    if args.encoder:
+        ENCODER_PATH = os.path.join(HERE, args.encoder) if not os.path.isabs(args.encoder) else args.encoder
     if args.command == "embed":
         embed()
     elif args.command == "train":
