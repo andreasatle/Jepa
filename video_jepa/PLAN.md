@@ -166,3 +166,19 @@ A departure that may matter: V-JEPA 2-AC plans over the encoder's patch tokens, 
 Tokens don't rescue planning: 6 against 4-5 is within the noise of 50 puzzles. The predictor is also weaker relative to doing nothing than step 7's: its held-out L1 is 0.085 against 0.138 for copying the last moment (1.6 times better; the [cls] predictors were 5 to 15 times better in MSE), and it was still improving slowly at 20,000 steps, so a longer run or the full 8 x 8 grid might add a few puzzles, but not the 30 that separate it from the image world model.
 
 **Conclusion of steps 1-8:** video self-supervision on Push-T learns motion without labels or actions (the probes), but neither its summary vector nor its tokens give a planner the fine distinctions near the goal that a model trained to predict the effect of each push learns. What a representation is trained for decides what it keeps. Closing the gap would mean training the encoder with the action-conditioned predictor (as LeWorldModel does), which turns it into step 0's image world model with video inputs: a different experiment, not a fix to this one.
+
+
+## Step 9, follow-ups: V-JEPA's tokens and second seeds (2026-11-14)
+
+`runs/chain-1-2.sh`. **V-JEPA tokens:** step 8's token planner with V-JEPA's target encoder (`runs/vjepa-s0`) instead of LeVJEPA's: **4/50**, the same as every frozen-video planner so far (4-6). The planning gap is not specific to LeVJEPA's objective.
+
+**Second training seeds** (V-JEPA 8,000 steps and LeVJEPA 9,000 steps, seed 1, each probed with attentive probe seeds 0-2; range over probe seeds):
+
+| encoder | position | velocity | contact R² | contact accuracy |
+|---|---|---|---|---|
+| V-JEPA s0 | 0.71-0.75 | 0.43-0.54 | | 83-86% |
+| V-JEPA s1 | 0.73-0.77 | 0.36-0.46 | 0.34-0.48 | 76-82% |
+| LeVJEPA s0 | 0.84-0.87 | 0.40-0.48 | | 78-84% |
+| LeVJEPA s1 | 0.86-0.87 | 0.52-0.55 | 0.53-0.55 | 84-85% |
+
+Position replicates: LeVJEPA beats V-JEPA by 0.1 in both seeds. On motion the seeds disagree (V-JEPA ahead in seed 0, LeVJEPA in seed 1), so "within noise" stands, now with the training seed's spread (about 0.1 on velocity) as the larger noise source. Both still learn motion well above the random floor (velocity 0.22-0.25).
