@@ -120,7 +120,27 @@ def compose(trial: int, out: str, fps: int = 10, card: bool = False) -> None:
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(fps), "-i", os.path.join(tmp, "%04d.png"),
                     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "26", "-movflags", "+faststart", out], check=True)
     cv2.imwrite(out.rsplit(".", 1)[0] + "-poster.jpg", cv2.imread(os.path.join(tmp, "0000.png")))
-    print(f"{out}: {n} frames at {fps} fps")
+    gif(tmp, out.rsplit(".", 1)[0] + ".gif", fps)
+    print(f"{out}: {n} frames at {fps} fps, and a GIF")
+
+
+def gif(frames: str, out: str, fps: int, colours: int = 16) -> None:
+    """A looping GIF at half the frame rate, from the lossless frames, with a fixed palette of the frames'
+    most frequent colours plus the pusher's blue (a generated palette merged the small blue dot into grey),
+    and each frame storing only what changed: about 30 KB instead of 100 KB."""
+    files = sorted(os.listdir(frames))[::3]
+    px = np.concatenate([cv2.cvtColor(cv2.imread(os.path.join(frames, f)), cv2.COLOR_BGR2RGB).reshape(-1, 3)
+                         for f in files])
+    cols, counts = np.unique(px, axis=0, return_counts=True)
+    cols = cols[np.argsort(-counts)]
+    blue = cols[(cols[:, 2].astype(int) - cols[:, 0].astype(int)) > 80][0]
+    keep = [*cols[:colours - 2], blue, cols[np.argmin(cols.sum(1))]]  # plus the darkest, for the text
+    palette = np.array(keep + [keep[0]] * (256 - len(keep)), dtype=np.uint8).reshape(16, 16, 3)
+    pal = os.path.join(OUT, "palette.png")
+    cv2.imwrite(pal, cv2.cvtColor(palette, cv2.COLOR_RGB2BGR))
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(fps), "-i", os.path.join(frames, "%04d.png"),
+                    "-i", pal, "-lavfi", f"fps={fps // 2}[x];[x][1:v]paletteuse=dither=none:diff_mode=rectangle",
+                    "-loop", "0", out], check=True)
 
 
 def main():
