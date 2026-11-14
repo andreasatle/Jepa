@@ -1,13 +1,13 @@
 """
-A side-by-side video of one Push-T puzzle for the homepage, with the puzzle's goal beside it (the green T the
-simulator draws is the game's usual target, not the puzzle's goal, which is where the expert's T was 25 steps
-later): the frozen LeVJEPA encoder's token planner (step 8)
-and the image world model (../pusht, SIGReg 0.09), from the same start to the same goal, with each one's own
-code; only the simulator's frames are recorded.
+A side-by-side video and GIF of one Push-T puzzle for the homepage: the frozen LeVJEPA encoder's token planner
+(step 8) and the image world model (../pusht, SIGReg 0.09), from the same start to the same goal, each with its
+own code; only the simulator's frames are recorded. The puzzle's goal (where the expert's T was 25 steps later)
+is drawn as an outline; the green T the simulator draws, the game's usual target, is taken out. Puzzle 45: the
+T travels about 160 px, the world model solves it and the token planner doesn't.
 
-    uv run python make_video.py record --planner tokens --trial 0   # runs/video/tokens-0.npy
-    uv run python make_video.py record --planner world --trial 0    # runs/video/world-0.npy (pusht's code)
-    uv run python make_video.py compose --trial 0 --out clip.mp4
+    uv run python make_video.py record --planner tokens --trial 45   # runs/video/tokens-45.npy
+    uv run python make_video.py record --planner world --trial 45    # runs/video/world-45.npy (pusht's code)
+    uv run python make_video.py compose --trial 45 --out runs/video/pusht-45.mp4   # and pusht-45.gif
 
 Each planner runs in its own process: pusht and video_jepa both have a model.py.
 """
@@ -87,35 +87,70 @@ def record(planner: str, trial: int) -> None:
     print(f"{planner}, trial {trial}: {'SOLVED' if ok else 'not solved'} in {len(env.frames) - 1} steps")
 
 
-def label(frame: np.ndarray, title: str, note: str, bar_height: int = 64) -> np.ndarray:
-    img = cv2.resize(frame, (360, 360), interpolation=cv2.INTER_AREA)
-    bar = np.full((bar_height, 360, 3), 255, np.uint8)
-    cv2.putText(bar, title, (10, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (40, 40, 40), 1, cv2.LINE_AA)
-    cv2.putText(bar, note, (10, bar_height - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (110, 110, 110), 1, cv2.LINE_AA)
+def label(frame: np.ndarray, title: str, note: str, size: int = 320, bar_height: int = 46) -> np.ndarray:
+    img = cv2.resize(frame, (size, size), interpolation=cv2.INTER_AREA)
+    cv2.rectangle(img, (0, 0), (size - 1, size - 1), (215, 215, 215), 1)
+    bar = np.full((bar_height, size, 3), 255, np.uint8)
+    cv2.putText(bar, title, (6, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (40, 40, 40), 1, cv2.LINE_AA)
+    cv2.putText(bar, note, (6, bar_height - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (110, 110, 110), 1, cv2.LINE_AA)
     return np.concatenate([bar, img], 0)
 
 
-def compose(trial: int, out: str, fps: int = 10, card: bool = False) -> None:
-    """The three panels (goal, video encoder, world model); `card`: the two planners only, 16:9 (732 x 412)
-    for the homepage's project card."""
+T_GREY = np.array([143, 163, 184])
+OUTLINE = (40, 40, 40)
+
+
+def staged(frame: np.ndarray, goal: np.ndarray) -> np.ndarray:
+    """The simulator's frame without its green target, with the puzzle's goal (the T where the expert had it
+    25 steps later) drawn as an outline, so the T is seen to reach it or not."""
+    img = frame.copy()
+    c = img.astype(int)
+    green = ((c[..., 1] > c[..., 0] + 25) & (c[..., 1] > c[..., 2] + 25)).astype(np.uint8)
+    near = cv2.dilate(green, np.ones((3, 3), np.uint8), iterations=2).astype(bool)
+    img[green.astype(bool) | (near & (c.min(-1) > 170))] = 255  # the green T, its pale edges; not the T
+    mask = (np.abs(goal.astype(int) - T_GREY).sum(-1) < 40).astype(np.uint8)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(img, contours, -1, OUTLINE, 1, cv2.LINE_AA)
+    return img
+
+
+def window(frames: list[np.ndarray], margin: int = 12) -> tuple[int, int, int]:
+    """The square (top, left, side) that holds everything that moves or matters in the frames, the goal
+    included: the panels show it enlarged instead of the whole, mostly empty table."""
+    ink = np.any([np.abs(f.astype(int) - 255).sum(-1) > 60 for f in frames], axis=0)
+    ink[:8], ink[-8:], ink[:, :8], ink[:, -8:] = False, False, False, False  # the frame's own border
+    rows, cols = np.nonzero(ink)
+    inner = frames[0].shape[0] - 16  # inside the simulator's border
+    side = min(max(rows.max() - rows.min(), cols.max() - cols.min()) + 2 * margin, inner)
+    top = int(np.clip((rows.min() + rows.max() - side) // 2, 8, 8 + inner - side))
+    left = int(np.clip((cols.min() + cols.max() - side) // 2, 8, 8 + inner - side))
+    return top, left, int(side)
+
+
+def crop(frame: np.ndarray, box: tuple[int, int, int]) -> np.ndarray:
+    top, left, side = box
+    return frame[top : top + side, left : left + side]
+
+
+def compose(trial: int, out: str, fps: int = 10) -> None:
+    """The two planners side by side, 16:9 (650 x 366), the goal outlined in both; a video, a poster and a
+    GIF. Played at the simulator's 10 steps a second, the end held a second."""
     left, right = (np.load(os.path.join(OUT, f"{p}-{trial}.npy")) for p in ("tokens", "world"))
-    goal = label(np.load(os.path.join(OUT, f"goal-{trial}.npy")), "The goal", "the expert's T, 25 steps on")
+    goal = np.load(os.path.join(OUT, f"goal-{trial}.npy"))
     lend, rend = (open(os.path.join(OUT, f"{p}-{trial}.txt")).read() for p in ("tokens", "world"))
-    n = max(len(left), len(right)) + fps  # hold the last frame for a second
-    tmp = os.path.join(OUT, f"frames-{trial}" + ("-card" if card else ""))
+    n = max(len(left), len(right)) + fps
+    tmp = os.path.join(OUT, f"frames-{trial}")
     os.makedirs(tmp, exist_ok=True)
+    for old in os.listdir(tmp):
+        os.remove(os.path.join(tmp, old))
+    gap = np.full((366, 10, 3), 255, np.uint8)
+    box = window([staged(f, goal) for f in (*left, *right)])
     for i in range(n):
         l, r = left[min(i, len(left) - 1)], right[min(i, len(right) - 1)]
         lnote = f"step {min(i, len(left) - 1)}" + (f"  ({lend})" if i >= len(left) - 1 else "")
         rnote = f"step {min(i, len(right) - 1)}" + (f"  ({rend})" if i >= len(right) - 1 else "")
-        if card:
-            gap = np.full((412, 12, 3), 255, np.uint8)
-            frame = np.concatenate([label(l, "Video encoder, frozen", lnote, 52), gap,
-                                    label(r, "World model, trained with actions", rnote, 52)], 1)
-        else:
-            gap = np.full((424, 12, 3), 255, np.uint8)
-            frame = np.concatenate([goal, gap, label(l, "Video encoder, frozen (LeVJEPA)", lnote), gap,
-                                    label(r, "Image world model, trained with actions", rnote)], 1)
+        frame = np.concatenate([label(crop(staged(l, goal), box), "Video encoder, frozen", lnote), gap,
+                                label(crop(staged(r, goal), box), "World model, trained with actions", rnote)], 1)
         cv2.imwrite(os.path.join(tmp, f"{i:04d}.png"), cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(fps), "-i", os.path.join(tmp, "%04d.png"),
                     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "26", "-movflags", "+faststart", out], check=True)
@@ -124,10 +159,10 @@ def compose(trial: int, out: str, fps: int = 10, card: bool = False) -> None:
     print(f"{out}: {n} frames at {fps} fps, and a GIF")
 
 
-def gif(frames: str, out: str, fps: int, colours: int = 16) -> None:
+def gif(frames: str, out: str, fps: int, colours: int = 8) -> None:
     """A looping GIF at half the frame rate, from the lossless frames, with a fixed palette of the frames'
     most frequent colours plus the pusher's blue (a generated palette merged the small blue dot into grey),
-    and each frame storing only what changed: about 30 KB instead of 100 KB."""
+    and each frame storing only what changed."""
     files = sorted(os.listdir(frames))[::3]
     px = np.concatenate([cv2.cvtColor(cv2.imread(os.path.join(frames, f)), cv2.COLOR_BGR2RGB).reshape(-1, 3)
                          for f in files])
@@ -139,7 +174,7 @@ def gif(frames: str, out: str, fps: int, colours: int = 16) -> None:
     pal = os.path.join(OUT, "palette.png")
     cv2.imwrite(pal, cv2.cvtColor(palette, cv2.COLOR_RGB2BGR))
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(fps), "-i", os.path.join(frames, "%04d.png"),
-                    "-i", pal, "-lavfi", f"fps={fps // 2}[x];[x][1:v]paletteuse=dither=none:diff_mode=rectangle",
+                    "-i", pal, "-lavfi", f"fps={fps}[x];[x][1:v]paletteuse=dither=none:diff_mode=rectangle",
                     "-loop", "0", out], check=True)
 
 
@@ -149,12 +184,11 @@ def main():
     ap.add_argument("--planner", choices=["tokens", "world"])
     ap.add_argument("--trial", type=int, default=0)
     ap.add_argument("--out", default=os.path.join(OUT, "pusht-side-by-side.mp4"))
-    ap.add_argument("--card", action="store_true", help="the two planners only, 16:9, for a project card")
     args = ap.parse_args()
     if args.command == "record":
         record(args.planner, args.trial)
     else:
-        compose(args.trial, args.out, card=args.card)
+        compose(args.trial, args.out)
 
 
 if __name__ == "__main__":
