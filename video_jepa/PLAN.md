@@ -151,3 +151,18 @@ The harness is not the cause: the control, run the same day with pusht's own cod
 
 A departure that may matter: V-JEPA 2-AC plans over the encoder's patch tokens, not one pooled vector; using the [cls] alone throws away the spatial detail the probes found in the tokens (attentive position 0.84 against 0.61 linear on the [cls] in the short run). The fair next test is a token-level predictor (for example the 64 tokens of the last frame, or a 4 x 4 pooled grid to keep the stored embeddings near 3 GB).
 
+
+## Step 8, planning over patch tokens (2026-11-14)
+
+`plan_tokens.py`: the last frame's 8 x 8 patch tokens of the frozen LeVJEPA encoder (still clips), pooled 2 x 2 to a 4 x 4 grid of 16 tokens per moment (450,850 moments, 2.8 GB, 25 min); a predictor over 3 moments x 16 tokens with block-causal attention, each token plus its time and grid position and the moment's action block, trained with L1 as V-JEPA 2-AC (20,000 steps, 21 min); step 7's CEM and 50 puzzles, cost the L1 distance to the goal's tokens (7.5 min).
+
+| planner | solved of 50 |
+|---|---|
+| random actions | 1 |
+| LeVJEPA [cls], still / clip (step 7) | 4 / 5 |
+| **LeVJEPA 4 x 4 tokens, still** | **6** |
+| image world model (`../pusht`) | 35 |
+
+Tokens don't rescue planning: 6 against 4-5 is within the noise of 50 puzzles. The predictor is also weaker relative to doing nothing than step 7's: its held-out L1 is 0.085 against 0.138 for copying the last moment (1.6 times better; the [cls] predictors were 5 to 15 times better in MSE), and it was still improving slowly at 20,000 steps, so a longer run or the full 8 x 8 grid might add a few puzzles, but not the 30 that separate it from the image world model.
+
+**Conclusion of steps 1-8:** video self-supervision on Push-T learns motion without labels or actions (the probes), but neither its summary vector nor its tokens give a planner the fine distinctions near the goal that a model trained to predict the effect of each push learns. What a representation is trained for decides what it keeps. Closing the gap would mean training the encoder with the action-conditioned predictor (as LeWorldModel does), which turns it into step 0's image world model with video inputs: a different experiment, not a fix to this one.
