@@ -170,13 +170,15 @@ def live_clip(seen: list[np.ndarray]) -> np.ndarray:
     return np.stack([seen[max(len(seen) - 1 - STRIDE * k, 0)] for k in range(CLIP - 1, -1, -1)])
 
 
-def run_episode(env, s_row, g_row, meta, frames, planner: ClipPlanner, windows: ClipWindows, trial) -> bool:
+def run_episode(env, s_row, g_row, meta, frames, planner: ClipPlanner, windows: ClipWindows, trial,
+                still_goal: bool = False) -> bool:
     """evaluate.run_episode for the model, each moment a clip: the recorded past before the start, then the
     simulator's frames."""
     state, goal = meta["state"][s_row].astype(np.float64), meta["state"][g_row].astype(np.float64)
     env.reset(seed=trial, options={"state": state, "goal_state": goal})
     gen = torch.Generator().manual_seed(trial)
-    z_goal = planner.encode(np.stack([frames[r] for r in windows.clip_rows(g_row)]))
+    goal_rows = [g_row] * CLIP if still_goal else windows.clip_rows(g_row)
+    z_goal = planner.encode(np.stack([frames[r] for r in goal_rows]))
     start = int(windows.clip_rows(s_row)[0])
     seen = [np.array(frames[r]) for r in range(start, s_row)] + [frame64(env.render())]
     z_hist, a_hist, steps = [], [], 0
@@ -201,7 +203,7 @@ def run_episode(env, s_row, g_row, meta, frames, planner: ClipPlanner, windows: 
     return False
 
 
-def evaluate(ckpt: str) -> None:
+def evaluate(ckpt: str, still_goal: bool = False) -> None:
     meta = dict(np.load("data/meta.npz"))
     frames = np.load("data/frames64.npy", mmap_mode="r")
     mu, sd = Windows.action_stats(meta)
@@ -211,10 +213,10 @@ def evaluate(ckpt: str) -> None:
     env = gym.make("swm/PushT-v1", resolution=224).unwrapped
     wins = []
     for trial, (s, g) in enumerate(ev.starts(meta)):
-        ok = run_episode(env, s, g, meta, frames, planner, windows, trial)
+        ok = run_episode(env, s, g, meta, frames, planner, windows, trial, still_goal)
         wins.append(ok)
         print(f"trial {trial:2d}: {'SOLVED' if ok else 'not solved'}", flush=True)
-    print(f"success rate: {sum(wins)}/{ev.N_EVAL}  ({ckpt})")
+    print(f"success rate: {sum(wins)}/{ev.N_EVAL}  ({ckpt}{', still goal' if still_goal else ''})")
 
 
 def main():
@@ -223,11 +225,12 @@ def main():
     ap.add_argument("ckpt", nargs="?")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--steps", type=int, default=30_000)
+    ap.add_argument("--still-goal", action="store_true", help="the goal as its frame repeated, not its clip")
     args = ap.parse_args()
     if args.command == "train":
         train(args.seed, args.steps)
     else:
-        evaluate(args.ckpt)
+        evaluate(args.ckpt, args.still_goal)
 
 
 if __name__ == "__main__":

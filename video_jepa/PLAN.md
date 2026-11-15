@@ -182,3 +182,16 @@ Tokens don't rescue planning: 6 against 4-5 is within the noise of 50 puzzles. T
 | LeVJEPA s1 | 0.86-0.87 | 0.52-0.55 | 0.53-0.55 | 84-85% |
 
 Position replicates: LeVJEPA beats V-JEPA by 0.1 in both seeds. On motion the seeds disagree (V-JEPA ahead in seed 0, LeVJEPA in seed 1), so "within noise" stands, now with the training seed's spread (about 0.1 on velocity) as the larger noise source. Both still learn motion well above the random floor (velocity 0.22-0.25).
+
+
+## Step 10, the image world model with clips as input (2026-11-14)
+
+`../pusht/clip_wm.py`, `../pusht/runs/chain-3.sh`: `../pusht`'s recipe (SIGReg 0.09, 30,000 steps, the same predictor, CEM and 50 puzzles) with one change: each moment is the last 4 frames, 2 steps apart, stacked as 12 channels into the encoder, which is trained together with the action-conditioned predictor (43 min).
+
+| planner | solved of 50 |
+|---|---|
+| image world model (control, rerun today) | 35 |
+| clip world model, goal = the expert's clip at the goal | 2 |
+| clip world model, goal = the goal frame repeated (a still clip) | 9 |
+
+The predictor fits better than the image model's (training MSE 0.011 against 0.017), yet plans far worse. The harness is not the cause: the control solves its 35 again, and both evaluations take the same time. The likely cause is the goal itself: with motion in the embedding, the goal's embedding also says how things were moving when the expert reached it, which the planner cannot and need not match; a still goal clip removes that, and success rises from 2 to 9, but a still clip is rare in training (only at episode starts), so its embedding is out of distribution. Motion in the input does not help a planner whose cost is a distance to one goal embedding; it would need a cost on the pose only (for example the last frame's part of the embedding), which is a different design. Not pursued: the question was whether seeing motion helps once the encoder is trained with the actions, and as built, it does not.
