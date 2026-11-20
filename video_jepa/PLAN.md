@@ -2,7 +2,9 @@
 
 **Goal (the user, 2026-11-09):** understand V-JEPA, a JEPA on video, by building a small one end to end. Not a benchmark: the point is to see each mechanism work (or fail) at a size the Mac can train in hours.
 
-**Status: steps 1-6 done (2026-11-13); step 7 (planning) first result (2026-11-14).** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
+**Status: closed (2026-11-20).** Steps 1-6 done (2026-11-13); planning with video encoders (steps 7-10) scored 2-9 of 50 against the image world model's 35. Push-T is quasi-static, so one frame is nearly the whole state and video has nothing to add; the planning steps had drifted from the goal (understanding V-JEPA) to a question Push-T can't answer. A transfer test with the pretrained V-JEPA 2 ViT-L (downloaded to `pretrained/`, git-ignored; 22 frames/s at 256 px on the Mac) was dropped: the user judged V-JEPA unsuited to our toy physics. Open thought (the user, 2026-11-17): video pretraining drops sound, which carries contact, materials and language.
+
+**Earlier status: steps 1-6 done (2026-11-13); step 7 (planning) first result (2026-11-14).** Order (the user, 2026-11-11): V-JEPA first, then LeVJEPA; the user expects to use LeVJEPA in the end, and the comparison shows what it gains or loses.
 
 ## What the papers say
 
